@@ -61,7 +61,7 @@ int main()
             ClearBackground(backgoundColor);
             BeginMode2D(camera);
             /// zde se maluje
-            DrawCircle(10,10,mik,BLUE);
+            DrawCircle(screenWidth/2,screenHeight/2,mik,BLUE);
             EndMode2D();
 
             DrawFPS(10, 10);
