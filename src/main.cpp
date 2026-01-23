@@ -19,8 +19,6 @@ int main()
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
     
-    int mik = 10;
-    
     while (!WindowShouldClose())
     {
 
@@ -54,17 +52,30 @@ int main()
         }
 
         /// zde se počitá
-        mik = (mik+1)%100;
-
+        int MENU_WIDTH = 300;
+        const int GRID_SIZE = 50;
+        const int gridRadius = 50000;
 
         BeginDrawing();
-            ClearBackground(backgoundColor);
+            ClearBackground(GREEN);
             BeginMode2D(camera);
-            /// zde se maluje
-            DrawCircle(screenWidth/2,screenHeight/2,mik,BLUE);
+            
+            // Vykreslení gridu
+            for (int x = MENU_WIDTH - gridRadius; x < MENU_WIDTH + gridRadius; x += GRID_SIZE){
+            DrawLine(x, -gridRadius, x, gridRadius, Color{ 50, 50, 80, 255 });
+            }
+
+            for (int y = -gridRadius; y < gridRadius; y += GRID_SIZE) {
+            DrawLine(MENU_WIDTH - gridRadius, y, MENU_WIDTH + gridRadius, y, Color{ 50, 50, 80, 255 });
+            }
+            
+
+            
+            
+            
             EndMode2D();
 
-            DrawFPS(10, 10);
+            //DrawFPS(10, 10);
         EndDrawing();
         
     }
