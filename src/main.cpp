@@ -7,8 +7,8 @@ int main()
 {
     const Color backgoundColor = {0, 0, 0, 255};
     
-    constexpr int screenWidth = 1900;
-    constexpr int screenHeight = 1000;
+    constexpr int screenWidth = 1920;
+    constexpr int screenHeight = 1080;
 
 
 
@@ -19,7 +19,6 @@ int main()
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
     
-    int mik = 10;
     while (!WindowShouldClose())
     {
 
@@ -53,19 +52,7 @@ int main()
         }
 
 
-        /// zde se počitá
-        mik = (mik+1)%100;
-
-
-        BeginDrawing();
-            ClearBackground(backgoundColor);
-            BeginMode2D(camera);
-            /// zde se maluje
-            DrawCircle(screenWidth/2,screenHeight/2,mik,BLUE);
-            EndMode2D();
-
-            DrawFPS(10, 10);
-        EndDrawing();
+        
     }
     
     CloseWindow();
