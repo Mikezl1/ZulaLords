@@ -12,7 +12,7 @@ int main()
 
 
 
-    InitWindow(screenWidth, screenHeight, "BlackZula");// vytvoreni okna
+    InitWindow(screenWidth, screenHeight, "Vesnice");// vytvoreni okna
     
     SetTargetFPS(60);
   
