@@ -5,7 +5,7 @@
 
 int main() 
 {
-    const Color backgoundColor = {0, 0, 0, 255};
+    const Color backgoundColor = GREEN;
     
     constexpr int screenWidth = 1920;
     constexpr int screenHeight = 1080;
@@ -58,7 +58,7 @@ int main()
         const int gridArea = 50000;
 
         BeginDrawing();
-            ClearBackground(GREEN);
+            ClearBackground(backgoundColor);
             BeginMode2D(camera);
             
             // Vykreslení gridu
@@ -70,13 +70,10 @@ int main()
             DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 255 });
             }
             
-
-            
-            
             
             EndMode2D();
 
-            //DrawFPS(10, 10);
+            DrawFPS(10, 10);
         EndDrawing();
         
     }
