@@ -51,22 +51,23 @@ int main()
             camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
         }
 
-        /// zde se počitá
-        int MENU_WIDTH = 300;
+        // Velikost ctverecku
         const int GRID_SIZE = 50;
-        const int gridRadius = 50000;
+
+        // Velikost gridu
+        const int gridArea = 50000;
 
         BeginDrawing();
             ClearBackground(GREEN);
             BeginMode2D(camera);
             
             // Vykreslení gridu
-            for (int x = MENU_WIDTH - gridRadius; x < MENU_WIDTH + gridRadius; x += GRID_SIZE){
-            DrawLine(x, -gridRadius, x, gridRadius, Color{ 50, 50, 80, 255 });
+            for (int x = -gridArea; x < gridArea; x += GRID_SIZE){
+            DrawLine(x, -gridArea, x, gridArea, Color{ 50, 50, 80, 255 });
             }
 
-            for (int y = -gridRadius; y < gridRadius; y += GRID_SIZE) {
-            DrawLine(MENU_WIDTH - gridRadius, y, MENU_WIDTH + gridRadius, y, Color{ 50, 50, 80, 255 });
+            for (int y = -gridArea; y < gridArea; y += GRID_SIZE) {
+            DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 255 });
             }
             
 
