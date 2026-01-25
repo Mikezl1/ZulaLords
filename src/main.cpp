@@ -66,7 +66,6 @@ int main()
                 settings = true;
             }
         }
-        float volume = 1920.0f;
 
         if(settings) {
             DrawRectangle(screenWidth / 2 - 350, screenHeight / 2 - 400, 700, 800, Color(BROWN));
