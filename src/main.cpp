@@ -26,8 +26,10 @@ int main()
     float buttonWidth = 200;
     float buttonHeight = 50;
     float startButtonY = screenHeight / 2 - buttonHeight - 100;
-    float quitButtonY = startButtonY + buttonHeight + 10;
-    float mainmenuButtonY = quitButtonY + buttonHeight + 10;
+    float quitButtonY = startButtonY + buttonHeight +10;
+    float mainmenuButtonY = startButtonY + buttonHeight + 10;
+    float SettingsButtonY = startButtonY + buttonHeight + 10;
+    float LoadButtonY = SettingsButtonY + buttonHeight + 10;
 
     // Velikost ctverecku
     const int GRID_SIZE = 50;
@@ -40,6 +42,7 @@ int main()
 
     float scale;
 
+
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -49,12 +52,24 @@ int main()
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game")) {
                 run = true;
             }
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+300, buttonWidth, buttonHeight }, "Quit")) {
+                EndMode2D();
+                EndDrawing();
+                CloseWindow();
+                return 0;
+            }
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, LoadButtonY + 100, buttonWidth, buttonHeight }, "Load game")) {
+                // nic zatim nedela
+            }
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, SettingsButtonY + 100, buttonWidth, buttonHeight }, "Settings")) {
+                // nic zatim nedela
+            }
         }
 
         if(run) {
 
             if(IsKeyPressed(KEY_A)) {
-                pause = true;
+                pause = !pause;
             }
 
             //kamera věci
@@ -66,7 +81,7 @@ int main()
             }
 
             float wheel = GetMouseWheelMove();
-            if (wheel != 0 && !pause) {
+            if ((wheel != 0) && !pause) {
                 // Get the world point that is under the mouse
                 Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
 
@@ -85,9 +100,6 @@ int main()
             ClearBackground(backgoundColor);
             BeginMode2D(camera);
 
-            DrawCircle(camera.target.x, camera.target.y, 10, RED);
-            DrawCircle(camera.offset.x, camera.offset.y, 10, BLUE);
-
             // Vykreslení gridu
             for (int x = -gridArea; x < gridArea; x += GRID_SIZE) {
                 DrawLine(x, -gridArea, x, gridArea, Color{ 50, 50, 80, 255 });
@@ -97,40 +109,36 @@ int main()
                 DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 255 });
             }
 
+            Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
+
+            int snapX = (int)(mouseWorldPos.x / GRID_SIZE) * GRID_SIZE;
+            int snapY = (int)(mouseWorldPos.y / GRID_SIZE) * GRID_SIZE;
+
+            DrawRectangle(snapX, snapY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
 
             EndMode2D();
+
+            DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
     
             if(pause) {
                 DrawRectangle(screenWidth / 2 - 150, screenHeight/2 - 200, 300, 400, Color{BROWN});
                 if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, startButtonY, buttonWidth, buttonHeight}, "Resume Game")){
                     pause = false;
                 }
-                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, mainmenuButtonY, buttonWidth, buttonHeight }, "To Main Menu")) {
+                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, LoadButtonY - 60, buttonWidth, buttonHeight }, "Load game")) {
+                }
+                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, mainmenuButtonY+60, buttonWidth, buttonHeight }, "To Main Menu")) {
                     pause = false;
                     run = false;
                 }
-                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, quitButtonY, buttonWidth, buttonHeight }, "Quit")) {
+                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, quitButtonY+200, buttonWidth, buttonHeight }, "Quit")) {
                     EndDrawing();
                     CloseWindow();
                     return 0;
                 }
-                EndDrawing();
-                }
-            DrawFPS(10, 10);
-            EndDrawing();
-            
-        }       
-
-        if (!run) {
-            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+100, buttonWidth, buttonHeight }, "Quit")) {
-                EndMode2D();
-                EndDrawing();
-                CloseWindow();
-                return 0;
             }
-        }   
-        
-        EndMode2D();
+        }       
+        DrawFPS(10, 10);
         EndDrawing();           
     }
     
