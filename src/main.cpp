@@ -39,6 +39,7 @@ int main()
 
     bool run = false;
     bool pause = false;
+    bool settings = false;
 
     float scale;
 
@@ -62,7 +63,15 @@ int main()
                 // nic zatim nedela
             }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, SettingsButtonY + 100, buttonWidth, buttonHeight }, "Settings")) {
-                // nic zatim nedela
+                settings = true;
+            }
+        }
+        float volume = 1920.0f;
+
+        if(settings) {
+            DrawRectangle(screenWidth / 2 - 350, screenHeight / 2 - 400, 700, 800, Color(BROWN));
+            if(GuiButton((Rectangle){ screenWidth / 2 - 350, SettingsButtonY - 310, 50, 50 }, "<")) {
+                settings = false;
             }
         }
 
