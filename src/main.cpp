@@ -43,7 +43,7 @@ int main()
 
     float scale;
 
-
+    SetExitKey(0);
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -76,7 +76,7 @@ int main()
 
         if(run) {
 
-            if(IsKeyPressed(KEY_A)) {
+            if(IsKeyPressed(KEY_ESCAPE)) {
                 pause = !pause;
             }
 
