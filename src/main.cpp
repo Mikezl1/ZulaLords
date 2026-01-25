@@ -45,9 +45,13 @@ int main()
         BeginDrawing();
         ClearBackground(YELLOW);
 
-        run = GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game");
-        
-        while(run) {
+        if (!run) {
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game")) {
+                run = true;
+            }
+        }
+
+        if(run) {
 
             if(IsKeyPressed(KEY_A)) {
                 pause = true;
@@ -104,7 +108,6 @@ int main()
                 if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, mainmenuButtonY, buttonWidth, buttonHeight }, "To Main Menu")) {
                     pause = false;
                     run = false;
-                    break;
                 }
                 if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, quitButtonY, buttonWidth, buttonHeight }, "Quit")) {
                     EndDrawing();
@@ -118,11 +121,13 @@ int main()
             
         }       
 
-        if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+100, buttonWidth, buttonHeight }, "Quit")) {
-            EndMode2D();
-            EndDrawing();
-            CloseWindow();
-            return 0;
+        if (!run) {
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+100, buttonWidth, buttonHeight }, "Quit")) {
+                EndMode2D();
+                EndDrawing();
+                CloseWindow();
+                return 0;
+            }
         }   
         
         EndMode2D();
