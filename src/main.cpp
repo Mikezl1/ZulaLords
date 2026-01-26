@@ -223,11 +223,11 @@ int main()
 
                 mousehold = 4;
             }
-            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, " Blackzula color")){
+            if (GuiButton((Rectangle){0, fromtop+200, 100, 50}, " Black color")){
 
                 mousehold = 5;
             }
-            if (GuiButton((Rectangle){0, fromtop+200, 100, 50}, " DELETE")){
+            if (GuiButton((Rectangle){0, fromtop+250, 100, 50}, " DELETE")){
 
                 mousehold = 67;
             }
