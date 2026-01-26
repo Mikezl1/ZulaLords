@@ -63,6 +63,7 @@ int main()
                 // nic zatim nedela
             }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, SettingsButtonY + 100, buttonWidth, buttonHeight }, "Settings")) {
+                ClearBackground(YELLOW);
                 settings = true;
             }
         }
