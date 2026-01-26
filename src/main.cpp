@@ -1,10 +1,21 @@
 #include <raylib.h>
 #include "raymath.h"
 #include <iostream>
+#include <vector>
 
 #define RAYGUI_IMPLEMENTATION
 
 #include "raygui.h"
+#define ZEZULA      CLITERAL(Color){ 0, 0, 0, 255 }
+
+class Object
+{
+    public:
+    Color barv;
+    int x,y;
+
+    private:
+};
 
 
 int main() 
@@ -41,18 +52,36 @@ int main()
     // Velikost gridu
     const int gridArea = 50000;
 
+    // počet buněk nebo kostek
+    const int cells = gridArea * 2 / GRID_SIZE;
+
     bool run = false;
     bool pause = false;
     bool settings = false;
 
     float scale;
 
+    //Object grid[gridArea/GRID_SIZE][gridArea/GRID_SIZE];
+    std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
+    //default color
+    
+    for (int x = 0; x < cells; x++) {
+        for (int y = 0; y < cells; y++) {
+            grid[x][y].barv = ZEZULA;
+            grid[x][y].x = x;
+            grid[x][y].y = y;
+        }
+    }
+    grid[1][1].barv = RED;
+    grid[1][cells-1].barv = RED;
+    grid[cells/2][cells/2].barv = RED;
+
     SetExitKey(0);
     while (!WindowShouldClose())
     {
         BeginDrawing();
         ClearBackground(YELLOW);
-
+        // start menu
         if (!run) {
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game") && !settings) {
                 run = true;
@@ -109,6 +138,7 @@ int main()
                 scale = 0.2f*wheel;
                 camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
             }
+
             ClearBackground(backgoundColor);
             BeginMode2D(camera);
 
@@ -128,6 +158,16 @@ int main()
 
             DrawRectangle(snapX, snapY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
 
+            for (int i = 0; i < cells; i++) {
+                for (int j = 0; j < cells; j++) {
+                    
+                    int drawX = (i * GRID_SIZE) - gridArea; 
+                    int drawY = (j * GRID_SIZE) - gridArea;
+                    if(grid[i][j].barv.r != ZEZULA.r || grid[i][j].barv.g != ZEZULA.g || grid[i][j].barv.b != ZEZULA.b || grid[i][j].barv.a != ZEZULA.a)
+                    DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, grid[i][j].barv);
+                }
+            }
+            
             EndMode2D();
 
             DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
