@@ -11,13 +11,17 @@ int main()
 {
     const Color backgoundColor = GREEN;
     
-    constexpr int screenWidth = 1920;
-    constexpr int screenHeight = 1080;
+    int screenWidth = 1500;
+    int screenHeight = 1000;
 
 
 
-    InitWindow(screenWidth, screenHeight, "Vesnice");// vytvoreni okna
+    InitWindow(GetScreenWidth(), GetScreenHeight(), "Vesnice");// vytvoreni okna
+
+    screenWidth = GetScreenWidth();
+    screenHeight = GetScreenHeight();
     
+
     SetTargetFPS(60);
   
     Camera2D camera = { 0 };
@@ -50,27 +54,26 @@ int main()
         ClearBackground(YELLOW);
 
         if (!run) {
-            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game")) {
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game") && !settings) {
                 run = true;
             }
-            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+300, buttonWidth, buttonHeight }, "Quit")) {
-                EndMode2D();
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+300, buttonWidth, buttonHeight }, "Quit") && !settings) {
                 EndDrawing();
                 CloseWindow();
                 return 0;
             }
-            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, LoadButtonY + 100, buttonWidth, buttonHeight }, "Load game")) {
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, LoadButtonY + 100, buttonWidth, buttonHeight }, "Load game") && !settings) {
                 // nic zatim nedela
             }
-            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, SettingsButtonY + 100, buttonWidth, buttonHeight }, "Settings")) {
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, SettingsButtonY + 100, buttonWidth, buttonHeight }, "Settings") && !settings) {
                 ClearBackground(YELLOW);
                 settings = true;
             }
         }
 
         if(settings) {
-            DrawRectangle(screenWidth / 2 - 350, screenHeight / 2 - 400, 700, 800, Color(BROWN));
-            if(GuiButton((Rectangle){ screenWidth / 2 - 350, SettingsButtonY - 310, 50, 50 }, "<")) {
+            DrawRectangle(screenWidth / 2 - screenWidth/4, screenHeight / 2 - screenHeight/4 -100, screenWidth/2, screenHeight/2 + 200, Color(BROWN));
+            if(GuiButton((Rectangle){ screenWidth / 2 - screenWidth/4, screenHeight /2 - screenHeight/4 -100, 50, 50 }, "<")) {
                 settings = false;
             }
         }
