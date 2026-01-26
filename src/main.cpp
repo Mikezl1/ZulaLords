@@ -6,7 +6,10 @@
 #define RAYGUI_IMPLEMENTATION
 
 #include "raygui.h"
-#define ZEZULA      CLITERAL(Color){ 0, 0, 0, 255 }
+#define ZEZULA (Color){ 1,0, 1, 0 }
+#define MIKU (Color){25, 224, 216,255}
+#define MIKU_SKIN (Color){253, 245, 230,255}
+#define MIKU_EYES (Color){8, 109, 209,255}
 
 class Object
 {
@@ -61,9 +64,10 @@ int main()
 
     float scale;
 
-    //Object grid[gridArea/GRID_SIZE][gridArea/GRID_SIZE];
+    int mousehold = 0;
+    
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
-    //default color
+
     
     for (int x = 0; x < cells; x++) {
         for (int y = 0; y < cells; y++) {
@@ -168,10 +172,68 @@ int main()
                 }
             }
             
-            EndMode2D();
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause)
+            {
+                switch (mousehold)
+                {
+                case 1:
+                        grid[(snapX + gridArea) / GRID_SIZE][(snapY + gridArea) / GRID_SIZE].barv = MIKU;
+                    break;
+                case 2:
+                        grid[(snapX + gridArea) / GRID_SIZE][(snapY + gridArea) / GRID_SIZE].barv = MIKU_SKIN;
+                    break;
+                case 3:
+                        grid[(snapX + gridArea) / GRID_SIZE][(snapY + gridArea) / GRID_SIZE].barv = MIKU_EYES;
+                    break;
+                case 4:
+                        grid[(snapX + gridArea) / GRID_SIZE][(snapY + gridArea) / GRID_SIZE].barv = (Color){209, 8, 125,255};
+                    break;
+                case 5:
+                        grid[(snapX + gridArea) / GRID_SIZE][(snapY + gridArea) / GRID_SIZE].barv = BLACK;
+                    break;
+                case 67:
+                        grid[(snapX + gridArea) / GRID_SIZE][(snapY + gridArea) / GRID_SIZE].barv = ZEZULA;
+                    break;
+                default:
+                    break;
+                }                
+            }
+            
 
+            
+
+            EndMode2D();
+            //in game menu
             DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
-    
+
+            float fromtop = 50;
+            if (GuiButton((Rectangle){0, fromtop, 100, 50}, " Miku color")){
+
+                mousehold = 1;
+            }
+            if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, " Face color")){
+
+                mousehold = 2;
+            }
+            if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, " Eye color")){
+
+                mousehold = 3;
+            }
+            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, " out of ideas color")){
+
+                mousehold = 4;
+            }
+            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, " Blackzula color")){
+
+                mousehold = 5;
+            }
+            if (GuiButton((Rectangle){0, fromtop+200, 100, 50}, " DELETE")){
+
+                mousehold = 67;
+            }
+
+
+
             if(pause) {
                 DrawRectangle(screenWidth / 2 - 150, screenHeight/2 - 200, 300, 400, Color{BROWN});
                 if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, startButtonY, buttonWidth, buttonHeight}, "Resume Game")){
