@@ -11,15 +11,24 @@
 #define MIKU_SKIN (Color){253, 245, 230,255}
 #define MIKU_EYES (Color){8, 109, 209,255}
 
+#define GRID_SIZE 50
+
 class Object
 {
     public:
     Color barv;
     int x,y;
-
+    int drawX, drawY;
+    void draw();
     private:
+
 };
 
+void Object::draw()
+{
+    DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, barv);
+    return;
+}
 
 int main() 
 {
@@ -50,7 +59,7 @@ int main()
     float LoadButtonY = SettingsButtonY + buttonHeight + 10;
 
     // Velikost ctverecku
-    const int GRID_SIZE = 50;
+    //const int GRID_SIZE = 50;
 
     // Velikost gridu
     const int gridArea = 50000;
@@ -74,6 +83,9 @@ int main()
             grid[x][y].barv = ZEZULA;
             grid[x][y].x = x;
             grid[x][y].y = y;
+            grid[x][y].drawX = (x * GRID_SIZE) - gridArea; 
+            grid[x][y].drawY = (y * GRID_SIZE) - gridArea;
+
         }
     }
     grid[1][1].barv = RED;
@@ -164,11 +176,8 @@ int main()
 
             for (int i = 0; i < cells; i++) {
                 for (int j = 0; j < cells; j++) {
-                    
-                    int drawX = (i * GRID_SIZE) - gridArea; 
-                    int drawY = (j * GRID_SIZE) - gridArea;
                     if(grid[i][j].barv.r != ZEZULA.r || grid[i][j].barv.g != ZEZULA.g || grid[i][j].barv.b != ZEZULA.b || grid[i][j].barv.a != ZEZULA.a)
-                    DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, grid[i][j].barv);
+                    grid[i][j].draw();
                 }
             }
             
