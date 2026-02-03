@@ -88,7 +88,7 @@ int main()
     //grid setup
     for (int x = 0; x < cells; x++) {
         for (int y = 0; y < cells; y++) {
-            grid[x][y].barv = ZEZULA;
+            grid[x][y].barv = BLUE;
             grid[x][y].x = x;
             grid[x][y].y = y;
             grid[x][y].drawX = (x * GRID_SIZE) - gridArea; 
@@ -99,6 +99,9 @@ int main()
     grid[1][1].barv = RED;
     grid[1][cells-1].barv = RED;
     grid[cells/2][cells/2].barv = RED;
+
+    int StartGridX = 0;
+    int StartGridY = 0;
 
     SetExitKey(0);
     while (!WindowShouldClose())// main loop
@@ -140,7 +143,7 @@ int main()
 
             //kamera věci
             // Translate based on mouse right click
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause) {
+            if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !pause) {
                 Vector2 delta = GetMouseDelta();
                 delta = Vector2Scale(delta, -1.0f/camera.zoom);
                 camera.target = Vector2Add(camera.target, delta);
@@ -212,9 +215,93 @@ int main()
             for (int y = -gridArea; y < gridArea; y += GRID_SIZE) {
                 DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 255 });
             }
+////////////////  TODO dodělat aby to bylo viditelne když se tahne
+            int gridX = (snapX + gridArea) / GRID_SIZE;
+            int gridY = (snapY + gridArea) / GRID_SIZE;
+            
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !pause)
+            {
+                StartGridX = gridX;
+                StartGridY = gridY;
 
+            }   
 
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
+            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause)
+            {
+                
+                if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
+                {
+                    int Start = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
+                    int End = (gridX > StartGridX) ? gridX : StartGridX;
+                    for (int i = Start; i <= End; i++)
+                    {
+                        if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells) 
+                        {
+                            switch (mousehold)
+                            {
+                            case 1:
+                                    grid[i][StartGridY].barv = MIKU;
+                                break;
+                            case 2:
+                                    grid[i][StartGridY].barv = MIKU_SKIN;
+                                break;
+                            case 3:
+                                    grid[i][StartGridY].barv = MIKU_EYES;
+                                break;
+                            case 4:
+                                    grid[i][StartGridY].barv = (Color){209, 8, 125,255};
+                                break;
+                            case 5:
+                                    grid[i][StartGridY].barv = BLACK;
+                                break;
+                            case 67:
+                                    grid[i][StartGridY].barv = ZEZULA;
+                                break;
+                            default:
+                                break;
+                            }  
+                        }
+                    }
+                    
+                }
+                else
+                {
+                    int Start = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
+                    int End = (gridY > StartGridY) ? gridY : StartGridY;
+                    for (int i = Start; i <= End; i++)
+                    {
+                        if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
+                        {
+                            switch (mousehold)
+                            {
+                            case 1:
+                                    grid[StartGridX][i].barv = MIKU;
+                                break;
+                            case 2:
+                                    grid[StartGridX][i].barv = MIKU_SKIN;
+                                break;
+                            case 3:
+                                    grid[StartGridX][i].barv = MIKU_EYES;
+                                break;
+                            case 4:
+                                    grid[StartGridX][i].barv = (Color){209, 8, 125,255};
+                                break;
+                            case 5:
+                                    grid[StartGridX][i].barv = BLACK;
+                                break;
+                            case 67:
+                                    grid[StartGridX][i].barv = ZEZULA;
+                                break;
+                            default:
+                                break;
+                            }  
+                        }
+                    }
+                    
+                }
+            }
+
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
             {
 
                 int gridX = (snapX + gridArea) / GRID_SIZE;
