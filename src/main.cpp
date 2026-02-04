@@ -6,12 +6,31 @@
 #define RAYGUI_IMPLEMENTATION
 
 #include "raygui.h"
-#define ZEZULA (Color){ 1,0, 1, 0 }
-#define MIKU (Color){25, 224, 216,255}
-#define MIKU_SKIN (Color){253, 245, 230,255}
-#define MIKU_EYES (Color){8, 109, 209,255}
-
 #define GRID_SIZE 50 // Velikost ctverecku
+#define gridArea  50000// Velikost gridu
+#define cells gridArea * 2 / GRID_SIZE// počet buněk nebo kostek
+
+typedef enum {
+    TERRAIN_BLANK,
+    TERRAIN_WOODEN_WALL,
+    TERRAIN_STONE_WALL,
+    TERRAIN_LIMESTONE_WALL,
+    TERRAIN_COUNT //last one
+} TerrainType;
+
+//postnoupnot MUSÍ BÝT STEJNÁ jako v enum
+const Color TerrainColors[] = {
+    [TERRAIN_BLANK] = {0, 0, 0, 0},
+    [TERRAIN_WOODEN_WALL] = {139, 69, 19, 255},
+    [TERRAIN_STONE_WALL]  = {136,140,141, 255}, 
+    [TERRAIN_LIMESTONE_WALL] = {217, 211, 199, 255}
+};
+
+
+bool operator!=(const Color& a, const Color& b)
+{
+    return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
+}
 
 class Object
 {
@@ -26,42 +45,61 @@ class Object
 
 void Object::draw()
 {
+    if(barv != TerrainColors[TERRAIN_BLANK])
     DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, barv);
-    DrawRectangleV({(float)drawX,(float)drawY},{(float)GRID_SIZE-10.0f, (float)GRID_SIZE-0.5f},barv);
+    
     return;
 }
 
 
-Camera2D cameraUpdate(Camera2D camera) {
-                //kamera věci
-            // Translate based on mouse right click
-            if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-                Vector2 delta = GetMouseDelta();
-                delta = Vector2Scale(delta, -1.0f/camera.zoom);
-                camera.target = Vector2Add(camera.target, delta);
-            }
+Camera2D cameraUpdate(Camera2D camera) {//kamera věci                
+    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+        Vector2 delta = GetMouseDelta();
+        delta = Vector2Scale(delta, -1.0f/camera.zoom);
+        camera.target = Vector2Add(camera.target, delta);
+    }
 
-            float wheel = GetMouseWheelMove();
-            if ((wheel != 0)) {
-                // Get the world point that is under the mouse
-                Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
-
-                // Set the offset to where the mouse is
-                camera.offset = GetMousePosition();
-
-                // Set the target to match, so that the camera maps the world space point 
-                // under the cursor to the screen space point under the cursor at any zoom
-                camera.target = mouseWorldPos;
-
-                // Zoom increment
-                // Uses log scaling to provide consistent zoom speed
-                float scale = 0.2f*wheel;
-                camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
-            }
-    // Not implemented in this example
+    float wheel = GetMouseWheelMove();
+    if ((wheel != 0)) {
+        Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
+        camera.offset = GetMousePosition();
+        camera.target = mouseWorldPos;
+        float scale = 0.2f*wheel;
+        camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
+    }
     return camera;
 }
 
+void PrintAll(std::vector<std::vector<Object>>& grid, Camera2D camera)
+{
+    // vykresleni všech buněk ktere jsou vidět na obrazovce
+    Vector2 BotRig  = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+
+    Vector2 TopLeft = GetScreenToWorld2D({ 0.0f, 0.0f }, camera);
+    Vector2 BotRight  = GetScreenToWorld2D(BotRig, camera);
+
+    Vector2 TopLVec = (TopLeft / GRID_SIZE) * GRID_SIZE;
+    Vector2 BotRVec = (BotRight / GRID_SIZE) * GRID_SIZE;
+
+    Vector2 TL_drw = {(TopLVec.x + gridArea) / GRID_SIZE,(TopLVec.y + gridArea) / GRID_SIZE};
+    Vector2 BR_drw = {(BotRVec.x + gridArea) / GRID_SIZE,(BotRVec.y + gridArea) / GRID_SIZE};
+
+    //aby se neprintovaly neexistujici bunky
+    if ((int)TL_drw.x < 0) TL_drw.x = 0;
+
+    if ((int)BR_drw.x > cells) BR_drw.x = cells;
+
+    if ((int)TL_drw.y < 0) TL_drw.y = 0;
+    
+    if ((int)BR_drw.y > cells) BR_drw.y = cells;
+
+    for (int i = TL_drw.x; i < BR_drw.x; i++) {
+        for (int j = TL_drw.y; j < BR_drw.y; j++) {
+            grid[i][j].draw();
+        }
+    }    
+    return;
+}
 
 Vector2 GetCameraCenterWorld(Camera2D camera) {
     Vector2 center = { (float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f };
@@ -96,15 +134,6 @@ int main()
     float SettingsButtonY = startButtonY + buttonHeight + 10;
     float LoadButtonY = SettingsButtonY + buttonHeight + 10;
 
-    // Velikost ctverecku
-    //const int GRID_SIZE = 50;  přesunulo se jako definice
-
-    // Velikost gridu
-    const int gridArea = 50000;
-
-    // počet buněk nebo kostek
-    const int cells = gridArea * 2 / GRID_SIZE;
-
     bool run = false;
     bool pause = false;
     bool settings = false;
@@ -116,7 +145,7 @@ int main()
     //grid setup
     for (int x = 0; x < cells; x++) {
         for (int y = 0; y < cells; y++) {
-            grid[x][y].barv = ZEZULA;
+            grid[x][y].barv = TerrainColors[TERRAIN_BLANK];
             grid[x][y].x = x;
             grid[x][y].y = y;
             grid[x][y].drawX = (x * GRID_SIZE) - gridArea; 
@@ -179,47 +208,21 @@ int main()
 
             int snapX = (int)floorf(mouseWorldPos.x / GRID_SIZE) * GRID_SIZE; // floorf  zaokrouhly dolu a potom to bude správný int pro GRID
             int snapY = (int)floorf(mouseWorldPos.y / GRID_SIZE) * GRID_SIZE;
-
-            DrawRectangle(snapX, snapY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
-
-            // vykresleni všech buněk ktere jsou vidět na obrazovce
-            Vector2 BotRig  = { (float)GetScreenWidth(), (float)GetScreenHeight() };
-
-            Vector2 TopLeft = GetScreenToWorld2D({ 0.0f, 0.0f }, camera);
-            Vector2 BotRight  = GetScreenToWorld2D(BotRig, camera);
-
-            Vector2 TopLVec = (TopLeft / GRID_SIZE) * GRID_SIZE;
-            Vector2 BotRVec = (BotRight / GRID_SIZE) * GRID_SIZE;
-
-            Vector2 TL_drw = {(TopLVec.x + gridArea) / GRID_SIZE,(TopLVec.y + gridArea) / GRID_SIZE};
-            Vector2 BR_drw = {(BotRVec.x + gridArea) / GRID_SIZE,(BotRVec.y + gridArea) / GRID_SIZE};
-
-            //aby se neprintovaly neexistujici bunky
-            if ((int)TL_drw.x < 0) TL_drw.x = 0;
-
-            if ((int)BR_drw.x > cells) BR_drw.x = cells;
-
-            if ((int)TL_drw.y < 0) TL_drw.y = 0;
             
-            if ((int)BR_drw.y > cells) BR_drw.y = cells;
+            if(!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) DrawRectangle(snapX, snapY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
 
-            for (int i = TL_drw.x; i < BR_drw.x; i++) {
-                for (int j = TL_drw.y; j < BR_drw.y; j++) {
-
-                    if(grid[i][j].barv.r != ZEZULA.r || grid[i][j].barv.g != ZEZULA.g || grid[i][j].barv.b != ZEZULA.b || grid[i][j].barv.a != ZEZULA.a)
-                    grid[i][j].draw();
-                }
-            }         
+            PrintAll(grid,camera);// vykresleni všech buněk ktere jsou vidět na obrazovce
 
             // Vykreslení gridu
             for (int x = -gridArea; x < gridArea; x += GRID_SIZE) {
-                DrawLine(x, -gridArea, x, gridArea, Color{ 50, 50, 80, 255 });
+                DrawLine(x, -gridArea, x, gridArea, Color{ 50, 50, 80, 55 });
             }
 
             for (int y = -gridArea; y < gridArea; y += GRID_SIZE) {
-                DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 255 });
+                DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 55 });
             }
-////////////////  TODO dodělat aby to bylo viditelne když se tahne
+
+            //line spawn veci
             int gridX = (snapX + gridArea) / GRID_SIZE;
             int gridY = (snapY + gridArea) / GRID_SIZE;
             
@@ -227,10 +230,42 @@ int main()
             {
                 StartGridX = gridX;
                 StartGridY = gridY;
-
             }   
 
-            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause)
+            if(IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause && mousehold !=0)
+            {
+                if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
+                {
+                    int Start = (gridX < StartGridX) ? gridX : StartGridX;
+                    int End = (gridX > StartGridX) ? gridX : StartGridX;
+                    for (int i = Start; i <= End; i++)
+                    {
+                        if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells)
+                        { 
+                            int mikX = grid[i][StartGridY].drawX;
+                            int mikY = grid[i][StartGridY].drawY;
+                            DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
+                        }
+                    }
+                }
+                else
+                {
+                    int Start = (gridY < StartGridY) ? gridY : StartGridY;
+                    int End = (gridY > StartGridY) ? gridY : StartGridY;
+                    for (int i = Start; i <= End; i++)
+                    {
+                        if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
+                        {
+                            int mikX = grid[StartGridX][i].drawX;
+                            int mikY = grid[StartGridX][i].drawY;
+                            DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
+
+                        }
+                    } 
+                }                
+            }
+
+            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
             {
                 
                 if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
@@ -241,29 +276,7 @@ int main()
                     {
                         if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells) 
                         {
-                            switch (mousehold)
-                            {
-                            case 1:
-                                    grid[i][StartGridY].barv = MIKU;
-                                break;
-                            case 2:
-                                    grid[i][StartGridY].barv = MIKU_SKIN;
-                                break;
-                            case 3:
-                                    grid[i][StartGridY].barv = MIKU_EYES;
-                                break;
-                            case 4:
-                                    grid[i][StartGridY].barv = (Color){209, 8, 125,255};
-                                break;
-                            case 5:
-                                    grid[i][StartGridY].barv = BLACK;
-                                break;
-                            case 67:
-                                    grid[i][StartGridY].barv = ZEZULA;
-                                break;
-                            default:
-                                break;
-                            }  
+                            grid[i][StartGridY].barv = TerrainColors[mousehold] ;
                         }
                     }
                     
@@ -276,35 +289,14 @@ int main()
                     {
                         if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
                         {
-                            switch (mousehold)
-                            {
-                            case 1:
-                                    grid[StartGridX][i].barv = MIKU;
-                                break;
-                            case 2:
-                                    grid[StartGridX][i].barv = MIKU_SKIN;
-                                break;
-                            case 3:
-                                    grid[StartGridX][i].barv = MIKU_EYES;
-                                break;
-                            case 4:
-                                    grid[StartGridX][i].barv = (Color){209, 8, 125,255};
-                                break;
-                            case 5:
-                                    grid[StartGridX][i].barv = BLACK;
-                                break;
-                            case 67:
-                                    grid[StartGridX][i].barv = ZEZULA;
-                                break;
-                            default:
-                                break;
-                            }  
+                            grid[StartGridX][i].barv = TerrainColors[mousehold] ;
                         }
                     }
                     
                 }
             }
 
+            // normal spawn věci
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
             {
 
@@ -315,29 +307,7 @@ int main()
                 //aby se nepsalo mimo bunky
                 if (gridX >= 0 && gridX < cells && gridY >= 0 && gridY < cells ) 
                 {
-                    switch (mousehold)
-                    {
-                    case 1:
-                            grid[gridX][gridY].barv = MIKU;
-                        break;
-                    case 2:
-                            grid[gridX][gridY].barv = MIKU_SKIN;
-                        break;
-                    case 3:
-                            grid[gridX][gridY].barv = MIKU_EYES;
-                        break;
-                    case 4:
-                            grid[gridX][gridY].barv = (Color){209, 8, 125,255};
-                        break;
-                    case 5:
-                            grid[gridX][gridY].barv = BLACK;
-                        break;
-                    case 67:
-                            grid[gridX][gridY].barv = ZEZULA;
-                        break;
-                    default:
-                        break;
-                    }  
+                    grid[gridX][gridY].barv = TerrainColors[mousehold] ;
                 }
               
             }
@@ -347,29 +317,22 @@ int main()
             DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
 
             float fromtop = 50;
-            if (GuiButton((Rectangle){0, fromtop, 100, 50}, " Miku color")){
+            if (GuiButton((Rectangle){0, fromtop, 100, 50}, "WOODEN WALL")){
 
-                mousehold = 1;
+                mousehold = TERRAIN_WOODEN_WALL;
             }
-            if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, " Face color")){
+            if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, "STONE WALL")){
 
-                mousehold = 2;
+                mousehold = TERRAIN_STONE_WALL;
             }
-            if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, " Eye color")){
+            if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, "LIMESTONE WALL")){
 
-                mousehold = 3;
+                mousehold = TERRAIN_LIMESTONE_WALL;
             }
-            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, " out of ideas color")){
 
-                mousehold = 4;
-            }
-            if (GuiButton((Rectangle){0, fromtop+200, 100, 50}, " Black color")){
+            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, " DELETE ")){
 
-                mousehold = 5;
-            }
-            if (GuiButton((Rectangle){0, fromtop+250, 100, 50}, " DELETE")){
-
-                mousehold = 67;
+                mousehold = TERRAIN_BLANK;
             }
 
 
@@ -399,3 +362,64 @@ int main()
     CloseWindow();
     return 0;
 }
+
+/*
+
+            // vykresleni všech buněk ktere jsou vidět na obrazovce
+            Vector2 BotRig  = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+
+            Vector2 TopLeft = GetScreenToWorld2D({ 0.0f, 0.0f }, camera);
+            Vector2 BotRight  = GetScreenToWorld2D(BotRig, camera);
+
+            Vector2 TopLVec = (TopLeft / GRID_SIZE) * GRID_SIZE;
+            Vector2 BotRVec = (BotRight / GRID_SIZE) * GRID_SIZE;
+
+            Vector2 TL_drw = {(TopLVec.x + gridArea) / GRID_SIZE,(TopLVec.y + gridArea) / GRID_SIZE};
+            Vector2 BR_drw = {(BotRVec.x + gridArea) / GRID_SIZE,(BotRVec.y + gridArea) / GRID_SIZE};
+
+            //aby se neprintovaly neexistujici bunky
+            if ((int)TL_drw.x < 0) TL_drw.x = 0;
+
+            if ((int)BR_drw.x > cells) BR_drw.x = cells;
+
+            if ((int)TL_drw.y < 0) TL_drw.y = 0;
+            
+            if ((int)BR_drw.y > cells) BR_drw.y = cells;
+
+            for (int i = TL_drw.x; i < BR_drw.x; i++) {
+                for (int j = TL_drw.y; j < BR_drw.y; j++) {
+
+                    if(grid[i][j].barv.r != ZEZULA.r || grid[i][j].barv.g != ZEZULA.g || grid[i][j].barv.b != ZEZULA.b || grid[i][j].barv.a != ZEZULA.a)
+                    grid[i][j].draw();
+                }
+            }
+                
+            
+
+
+
+                                switch (mousehold)
+                    {
+                    case 1:
+                            grid[gridX][gridY].barv = MIKU;
+                        break;
+                    case 2:
+                            grid[gridX][gridY].barv = MIKU_SKIN;
+                        break;
+                    case 3:
+                            grid[gridX][gridY].barv = MIKU_EYES;
+                        break;
+                    case 4:
+                            grid[gridX][gridY].barv = (Color){209, 8, 125,255};
+                        break;
+                    case 5:
+                            grid[gridX][gridY].barv = BLACK;
+                        break;
+                    case 67:
+                            grid[gridX][gridY].barv = ZEZULA;
+                        break;
+                    default:
+                        break;
+                    }  
+
+*/
