@@ -32,6 +32,36 @@ void Object::draw()
 }
 
 
+Camera2D cameraUpdate(Camera2D camera) {
+                //kamera věci
+            // Translate based on mouse right click
+            if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+                Vector2 delta = GetMouseDelta();
+                delta = Vector2Scale(delta, -1.0f/camera.zoom);
+                camera.target = Vector2Add(camera.target, delta);
+            }
+
+            float wheel = GetMouseWheelMove();
+            if ((wheel != 0)) {
+                // Get the world point that is under the mouse
+                Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
+
+                // Set the offset to where the mouse is
+                camera.offset = GetMousePosition();
+
+                // Set the target to match, so that the camera maps the world space point 
+                // under the cursor to the screen space point under the cursor at any zoom
+                camera.target = mouseWorldPos;
+
+                // Zoom increment
+                // Uses log scaling to provide consistent zoom speed
+                float scale = 0.2f*wheel;
+                camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
+            }
+    // Not implemented in this example
+    return camera;
+}
+
 
 Vector2 GetCameraCenterWorld(Camera2D camera) {
     Vector2 center = { (float)GetScreenWidth() / 2.0f, (float)GetScreenHeight() / 2.0f };
@@ -79,8 +109,6 @@ int main()
     bool pause = false;
     bool settings = false;
 
-    float scale;
-
     int mousehold = 0;
     
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
@@ -88,7 +116,7 @@ int main()
     //grid setup
     for (int x = 0; x < cells; x++) {
         for (int y = 0; y < cells; y++) {
-            grid[x][y].barv = BLUE;
+            grid[x][y].barv = ZEZULA;
             grid[x][y].x = x;
             grid[x][y].y = y;
             grid[x][y].drawX = (x * GRID_SIZE) - gridArea; 
@@ -141,31 +169,7 @@ int main()
                 pause = !pause;
             }
 
-            //kamera věci
-            // Translate based on mouse right click
-            if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && !pause) {
-                Vector2 delta = GetMouseDelta();
-                delta = Vector2Scale(delta, -1.0f/camera.zoom);
-                camera.target = Vector2Add(camera.target, delta);
-            }
-
-            float wheel = GetMouseWheelMove();
-            if ((wheel != 0) && !pause) {
-                // Get the world point that is under the mouse
-                Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
-
-                // Set the offset to where the mouse is
-                camera.offset = GetMousePosition();
-
-                // Set the target to match, so that the camera maps the world space point 
-                // under the cursor to the screen space point under the cursor at any zoom
-                camera.target = mouseWorldPos;
-
-                // Zoom increment
-                // Uses log scaling to provide consistent zoom speed
-                scale = 0.2f*wheel;
-                camera.zoom = Clamp(expf(logf(camera.zoom)+scale), 0.125f, 64.0f);
-            }
+            if(!pause)camera = cameraUpdate(camera);
 
             ClearBackground(backgoundColor);
             BeginMode2D(camera);
