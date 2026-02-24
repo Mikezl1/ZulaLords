@@ -234,66 +234,101 @@ int main()
 
             if(IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause && mousehold !=0)
             {
-                if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
+                // if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
+                // {
+                //     int Start = (gridX < StartGridX) ? gridX : StartGridX;
+                //     int End = (gridX > StartGridX) ? gridX : StartGridX;
+                //     for (int i = Start; i <= End; i++)
+                //     {
+                //         if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells)
+                //         { 
+                //             int mikX = grid[i][StartGridY].drawX;
+                //             int mikY = grid[i][StartGridY].drawY;
+                //             DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
+                //         }
+                //     }
+                // }
+                // else
+                // {
+                //     int Start = (gridY < StartGridY) ? gridY : StartGridY;
+                //     int End = (gridY > StartGridY) ? gridY : StartGridY;
+                //     for (int i = Start; i <= End; i++)
+                //     {
+                //         if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
+                //         {
+                //             int mikX = grid[StartGridX][i].drawX;
+                //             int mikY = grid[StartGridX][i].drawY;
+                //             DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
+
+                //         }
+                //     } 
+                // }  
+                int StartX = (gridX < StartGridX) ? gridX : StartGridX;
+                int EndX = (gridX > StartGridX) ? gridX : StartGridX;
+                int StartY = (gridY < StartGridY) ? gridY : StartGridY;
+                int EndY = (gridY > StartGridY) ? gridY : StartGridY;
+
+                for (int i = StartX; i <= EndX; i++)
                 {
-                    int Start = (gridX < StartGridX) ? gridX : StartGridX;
-                    int End = (gridX > StartGridX) ? gridX : StartGridX;
-                    for (int i = Start; i <= End; i++)
+                    for (int ii = StartY; ii <= EndY; ii++)
                     {
-                        if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells)
-                        { 
-                            int mikX = grid[i][StartGridY].drawX;
-                            int mikY = grid[i][StartGridY].drawY;
-                            DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
+                        if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
+                        {
+                            int drawX = grid[i][ii].drawX;
+                            int drawY = grid[i][ii].drawY;
+                            DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
                         }
                     }
-                }
-                else
-                {
-                    int Start = (gridY < StartGridY) ? gridY : StartGridY;
-                    int End = (gridY > StartGridY) ? gridY : StartGridY;
-                    for (int i = Start; i <= End; i++)
-                    {
-                        if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
-                        {
-                            int mikX = grid[StartGridX][i].drawX;
-                            int mikY = grid[StartGridX][i].drawY;
-                            DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
-
-                        }
-                    } 
-                }                
+                }    
             }
 
             if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
             {
                 
-                if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
-                {
-                    int Start = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
-                    int End = (gridX > StartGridX) ? gridX : StartGridX;
-                    for (int i = Start; i <= End; i++)
+                // if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
+                // {
+                //     int Start = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
+                //     int End = (gridX > StartGridX) ? gridX : StartGridX;
+                //     for (int i = Start; i <= End; i++)
+                //     {
+                //         if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells) 
+                //         {
+                //             grid[i][StartGridY].barv = TerrainColors[mousehold] ;
+                //         }
+                //     }
+                    
+                // }
+                // else if ( abs(gridY - StartGridY) > abs(gridX - StartGridX) )
+                // {
+                //     int Start = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
+                //     int End = (gridY > StartGridY) ? gridY : StartGridY;
+                //     for (int i = Start; i <= End; i++)
+                //     {
+                //         if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
+                //         {
+                //             grid[StartGridX][i].barv = TerrainColors[mousehold] ;
+                //         }
+                //     }
+                    
+                // }
+                //else {
+                    int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
+                    int EndX = (gridX > StartGridX) ? gridX : StartGridX;
+                    int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
+                    int EndY = (gridY > StartGridY) ? gridY : StartGridY;
+                    
+                    for (int i = StartX; i <= EndX; i++)
                     {
-                        if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells) 
+                        for (int ii = StartY; ii <= EndY; ii++)
                         {
-                            grid[i][StartGridY].barv = TerrainColors[mousehold] ;
+                            if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
+                            {
+                                grid[i][ii].barv = TerrainColors[mousehold] ;
+                            }
                         }
                     }
-                    
-                }
-                else
-                {
-                    int Start = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
-                    int End = (gridY > StartGridY) ? gridY : StartGridY;
-                    for (int i = Start; i <= End; i++)
-                    {
-                        if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
-                        {
-                            grid[StartGridX][i].barv = TerrainColors[mousehold] ;
-                        }
-                    }
-                    
-                }
+
+                //}
             }
 
             // normal spawn věci
