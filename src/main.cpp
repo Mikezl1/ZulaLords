@@ -12,8 +12,8 @@
 
 typedef enum {
     TERRAIN_BLANK,
-    TERRAIN_WOODEN_WALL,
-    TERRAIN_STONE_WALL,
+    TERRAIN_DIRT_PATH,
+    TERRAIN_STONE_PATH,
     TERRAIN_LIMESTONE_WALL,
     TERRAIN_COUNT //last one
 } TerrainType;
@@ -21,8 +21,8 @@ typedef enum {
 //postnoupnot MUSÍ BÝT STEJNÁ jako v enum
 const Color TerrainColors[] = {
     [TERRAIN_BLANK] = {0, 0, 0, 0},
-    [TERRAIN_WOODEN_WALL] = {139, 69, 19, 255},
-    [TERRAIN_STONE_WALL]  = {136,140,141, 255}, 
+    [TERRAIN_DIRT_PATH] = {139, 69, 19, 255},
+    [TERRAIN_STONE_PATH]  = {136,140,141, 255}, 
     [TERRAIN_LIMESTONE_WALL] = {217, 211, 199, 255}
 };
 
@@ -126,17 +126,31 @@ int main()
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
 
+    float settingsboxX = screenWidth / 4;
+    float settingsboxY = screenHeight / 4 - 100;
+    float settingsboxheight = screenHeight / 2 + 200;
+    float settingsboxwidth = screenWidth / 2;
+
+    float pausemenuH = 400;
+    float pausemenuW = 300;
+    float pausemenuX = screenWidth / 2 - pausemenuW/2;
+    float pausemenuY = screenHeight / 2 - pausemenuH/2;
+    float pausemenuspacing = 10;
+
     float buttonWidth = 200;
     float buttonHeight = 50;
     float startButtonY = screenHeight / 2 - buttonHeight - 100;
     float quitButtonY = startButtonY + buttonHeight +10;
-    float mainmenuButtonY = startButtonY + buttonHeight + 10;
     float SettingsButtonY = startButtonY + buttonHeight + 10;
     float LoadButtonY = SettingsButtonY + buttonHeight + 10;
 
     bool run = false;
     bool pause = false;
     bool settings = false;
+    bool build;
+    bool paths;
+    bool houses;
+    bool destroy;
 
     int mousehold = 0;
     
@@ -170,11 +184,6 @@ int main()
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game") && !settings) {
                 run = true;
             }
-            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+300, buttonWidth, buttonHeight }, "Quit") && !settings) {
-                EndDrawing();
-                CloseWindow();
-                return 0;
-            }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, LoadButtonY + 100, buttonWidth, buttonHeight }, "Load game") && !settings) {
                 // nic zatim nedela
             }
@@ -182,19 +191,24 @@ int main()
                 ClearBackground(YELLOW);
                 settings = true;
             }
+            if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, quitButtonY+300, buttonWidth, buttonHeight }, "Quit") && !settings) {
+                EndDrawing();
+                CloseWindow();
+                return 0;
+            }
         }
 
         if(settings) {
-            DrawRectangle(screenWidth / 2 - screenWidth/4, screenHeight / 2 - screenHeight/4 -100, screenWidth/2, screenHeight/2 + 200, Color(BROWN));
-            if(GuiButton((Rectangle){ screenWidth / 2 - screenWidth/4, screenHeight /2 - screenHeight/4 -100, 50, 50 }, "<")) {
-                settings = false;
+            DrawRectangle(settingsboxX, settingsboxY, settingsboxwidth, settingsboxheight, Color(BROWN));
+            if(GuiButton((Rectangle){ settingsboxX, settingsboxY, 50, 50 }, "<")) {
+                settings = false; 
             }
         }
 
         //game
         if(run) {
 
-            if(IsKeyPressed(KEY_ESCAPE)) {
+            if(IsKeyPressed(KEY_ESCAPE) && !build) {
                 pause = !pause;
             }
 
@@ -282,7 +296,7 @@ int main()
                 }    
             }
 
-            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
+            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
             {
                 
                 // if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
@@ -332,7 +346,7 @@ int main()
             }
 
             // normal spawn věci
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && (paths | destroy))
             {
 
                 int gridX = (snapX + gridArea) / GRID_SIZE;
@@ -352,38 +366,74 @@ int main()
             DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
 
             float fromtop = 50;
-            if (GuiButton((Rectangle){0, fromtop, 100, 50}, "WOODEN WALL")){
 
-                mousehold = TERRAIN_WOODEN_WALL;
+            if (GuiButton((Rectangle){0, fromtop, 100, 50}, "PATHS") && !build){
+                paths = true;
+                build = true;
             }
-            if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, "STONE WALL")){
-
-                mousehold = TERRAIN_STONE_WALL;
+            if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, "HOUSES") && !build){
+                houses = true;
+                build = true;
             }
-            if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, "LIMESTONE WALL")){
-
-                mousehold = TERRAIN_LIMESTONE_WALL;
-            }
-
-            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, " DELETE ")){
-
-                mousehold = TERRAIN_BLANK;
+            if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, "SHOPS") && !build){
+                build = true;
             }
 
+            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, "DESTROY") && !build){
+                destroy = true;
+                build = true;
+            }
+
+            if(build) {
+                DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
+                if(paths) {
+                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "DIRT PATH")){
+                        mousehold = TERRAIN_DIRT_PATH;
+                    }
+                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "STONE PATH")){
+                        mousehold = TERRAIN_STONE_PATH;
+                    }
+                }
+
+                if(houses) {
+                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "HOUSE 1")){
+                    }
+                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "HOUSE 2")){
+                    }
+                }
+
+                if(destroy) {
+                    mousehold = TERRAIN_BLANK;
+                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "CANCEL")){
+                        destroy = false;
+                        build = false;
+                    }
+                }
+
+
+                if (IsKeyPressed(KEY_ESCAPE))
+                {
+                    paths = false;
+                    houses = false;
+                    destroy = false;
+                    build = false;
+                }
+            }
+            
 
             //in pause menu
             if(pause) {
-                DrawRectangle(screenWidth / 2 - 150, screenHeight/2 - 200, 300, 400, Color{BROWN});
-                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, startButtonY, buttonWidth, buttonHeight}, "Resume Game")){
+                DrawRectangle(pausemenuX, pausemenuY, pausemenuW, pausemenuH, Color{BROWN});
+                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + buttonHeight, buttonWidth, buttonHeight}, "Resume Game")){
                     pause = false;
                 }
-                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, LoadButtonY - 60, buttonWidth, buttonHeight }, "Load game")) {
+                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 2*buttonHeight + pausemenuspacing, buttonWidth, buttonHeight }, "Load game")) {
                 }
-                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, mainmenuButtonY+60, buttonWidth, buttonHeight }, "To Main Menu")) {
+                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 3*buttonHeight + 2*pausemenuspacing, buttonWidth, buttonHeight }, "To Main Menu")) {
                     pause = false;
                     run = false;
                 }
-                if (GuiButton((Rectangle){ screenWidth / 2 - buttonWidth /2, quitButtonY+200, buttonWidth, buttonHeight }, "Quit")) {
+                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + pausemenuH - 2*buttonHeight, buttonWidth, buttonHeight }, "Quit")) {
                     EndDrawing();
                     CloseWindow();
                     return 0;
