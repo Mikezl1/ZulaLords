@@ -232,7 +232,7 @@ int main()
                 StartGridY = gridY;
             }   
 
-            if(IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause && mousehold !=0)
+            if(IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause)
             {
                 // if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
                 // {
@@ -397,64 +397,3 @@ int main()
     CloseWindow();
     return 0;
 }
-
-/*
-
-            // vykresleni všech buněk ktere jsou vidět na obrazovce
-            Vector2 BotRig  = { (float)GetScreenWidth(), (float)GetScreenHeight() };
-
-            Vector2 TopLeft = GetScreenToWorld2D({ 0.0f, 0.0f }, camera);
-            Vector2 BotRight  = GetScreenToWorld2D(BotRig, camera);
-
-            Vector2 TopLVec = (TopLeft / GRID_SIZE) * GRID_SIZE;
-            Vector2 BotRVec = (BotRight / GRID_SIZE) * GRID_SIZE;
-
-            Vector2 TL_drw = {(TopLVec.x + gridArea) / GRID_SIZE,(TopLVec.y + gridArea) / GRID_SIZE};
-            Vector2 BR_drw = {(BotRVec.x + gridArea) / GRID_SIZE,(BotRVec.y + gridArea) / GRID_SIZE};
-
-            //aby se neprintovaly neexistujici bunky
-            if ((int)TL_drw.x < 0) TL_drw.x = 0;
-
-            if ((int)BR_drw.x > cells) BR_drw.x = cells;
-
-            if ((int)TL_drw.y < 0) TL_drw.y = 0;
-            
-            if ((int)BR_drw.y > cells) BR_drw.y = cells;
-
-            for (int i = TL_drw.x; i < BR_drw.x; i++) {
-                for (int j = TL_drw.y; j < BR_drw.y; j++) {
-
-                    if(grid[i][j].barv.r != ZEZULA.r || grid[i][j].barv.g != ZEZULA.g || grid[i][j].barv.b != ZEZULA.b || grid[i][j].barv.a != ZEZULA.a)
-                    grid[i][j].draw();
-                }
-            }
-                
-            
-
-
-
-                                switch (mousehold)
-                    {
-                    case 1:
-                            grid[gridX][gridY].barv = MIKU;
-                        break;
-                    case 2:
-                            grid[gridX][gridY].barv = MIKU_SKIN;
-                        break;
-                    case 3:
-                            grid[gridX][gridY].barv = MIKU_EYES;
-                        break;
-                    case 4:
-                            grid[gridX][gridY].barv = (Color){209, 8, 125,255};
-                        break;
-                    case 5:
-                            grid[gridX][gridY].barv = BLACK;
-                        break;
-                    case 67:
-                            grid[gridX][gridY].barv = ZEZULA;
-                        break;
-                    default:
-                        break;
-                    }  
-
-*/
