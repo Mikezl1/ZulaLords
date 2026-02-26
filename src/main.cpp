@@ -26,6 +26,19 @@ const Color TerrainColors[] = {
     [TERRAIN_LIMESTONE_WALL] = {217, 211, 199, 255}
 };
 
+struct BuildingTemplate
+{
+    std::string name;
+    int gridWidth;
+    int gridHeight;
+    Color color;
+    void draw(int drawX,int drawY);
+};
+void BuildingTemplate::draw(int drawX,int drawY)
+{
+    DrawRectangle(drawX, drawY, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
+    return;
+}
 
 bool operator!=(const Color& a, const Color& b)
 {
@@ -147,13 +160,22 @@ int main()
     bool run = false;
     bool pause = false;
     bool settings = false;
-    bool build;
-    bool paths;
-    bool houses;
-    bool destroy;
+    bool build = 0;
+    bool paths = 0;
+    bool houses = 0;
+    bool destroy = 0;
 
     int mousehold = 0;
-    
+
+    //building stuff
+    bool isdragg = 0;
+    BuildingTemplate draggedTemplate;
+    std::vector<BuildingTemplate> BuildingTemplate = {
+        {"Basic House", 10, 5, GRAY,},
+        {"Basic House2", 6, 7, BROWN,},
+    };
+
+
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
 
     //grid setup
@@ -248,35 +270,6 @@ int main()
 
             if(IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause)
             {
-                // if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
-                // {
-                //     int Start = (gridX < StartGridX) ? gridX : StartGridX;
-                //     int End = (gridX > StartGridX) ? gridX : StartGridX;
-                //     for (int i = Start; i <= End; i++)
-                //     {
-                //         if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells)
-                //         { 
-                //             int mikX = grid[i][StartGridY].drawX;
-                //             int mikY = grid[i][StartGridY].drawY;
-                //             DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
-                //         }
-                //     }
-                // }
-                // else
-                // {
-                //     int Start = (gridY < StartGridY) ? gridY : StartGridY;
-                //     int End = (gridY > StartGridY) ? gridY : StartGridY;
-                //     for (int i = Start; i <= End; i++)
-                //     {
-                //         if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
-                //         {
-                //             int mikX = grid[StartGridX][i].drawX;
-                //             int mikY = grid[StartGridX][i].drawY;
-                //             DrawRectangle(mikX, mikY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
-
-                //         }
-                //     } 
-                // }  
                 int StartX = (gridX < StartGridX) ? gridX : StartGridX;
                 int EndX = (gridX > StartGridX) ? gridX : StartGridX;
                 int StartY = (gridY < StartGridY) ? gridY : StartGridY;
@@ -298,34 +291,6 @@ int main()
 
             if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
             {
-                
-                // if ( abs(gridX - StartGridX) >= abs(gridY - StartGridY))
-                // {
-                //     int Start = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
-                //     int End = (gridX > StartGridX) ? gridX : StartGridX;
-                //     for (int i = Start; i <= End; i++)
-                //     {
-                //         if (i >= 0 && i < cells && StartGridY >= 0 && StartGridY < cells) 
-                //         {
-                //             grid[i][StartGridY].barv = TerrainColors[mousehold] ;
-                //         }
-                //     }
-                    
-                // }
-                // else if ( abs(gridY - StartGridY) > abs(gridX - StartGridX) )
-                // {
-                //     int Start = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
-                //     int End = (gridY > StartGridY) ? gridY : StartGridY;
-                //     for (int i = Start; i <= End; i++)
-                //     {
-                //         if (StartGridX >= 0 && StartGridX < cells && i >= 0 && i < cells ) 
-                //         {
-                //             grid[StartGridX][i].barv = TerrainColors[mousehold] ;
-                //         }
-                //     }
-                    
-                // }
-                //else {
                     int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
                     int EndX = (gridX > StartGridX) ? gridX : StartGridX;
                     int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
@@ -359,6 +324,34 @@ int main()
                     grid[gridX][gridY].barv = TerrainColors[mousehold] ;
                 }
               
+            }
+
+
+            if(houses && isdragg) {//když dům
+                draggedTemplate.draw(snapX,snapY);
+
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
+                {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
+
+                    int GigaNigaGridX = (snapX + gridArea) / GRID_SIZE;//jsem chtel gridX ale ten uz byl uzit
+                    int GigaNigaGridY = (snapY + gridArea) / GRID_SIZE;
+
+                    for (int x = 0; x < draggedTemplate.gridWidth; x++)
+                    {
+                        for (int y = 0; y < draggedTemplate.gridHeight; y++)
+                        {
+                            int targetX = GigaNigaGridX + x;
+                            int targetY = GigaNigaGridY + y;
+
+                            if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells) 
+                            {
+                                grid[targetX][targetY].barv = draggedTemplate.color; 
+                            }
+                        }
+                    }
+                    isdragg = 0;
+                }
+                
             }
 
             EndMode2D();
@@ -397,8 +390,12 @@ int main()
 
                 if(houses) {
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "HOUSE 1")){
+                        draggedTemplate = BuildingTemplate[0];
+                        isdragg = 1;
                     }
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "HOUSE 2")){
+                        draggedTemplate = BuildingTemplate[1];
+                        isdragg = 1;
                     }
                 }
 
