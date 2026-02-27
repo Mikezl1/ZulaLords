@@ -34,7 +34,23 @@ struct BuildingTemplate
     Color color;
     void draw(int drawX,int drawY);
 };
+
+struct ShopTemplate
+{
+    std::string name;
+    int gridWidth;
+    int gridHeight;
+    Color color;
+    void draw(int drawX,int drawY);
+};
+
 void BuildingTemplate::draw(int drawX,int drawY)
+{
+    DrawRectangle(drawX, drawY, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
+    return;
+}
+
+void ShopTemplate::draw(int drawX,int drawY)
 {
     DrawRectangle(drawX, drawY, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
     return;
@@ -130,6 +146,8 @@ int main()
 
     InitWindow(GetScreenWidth(), GetScreenHeight(), "Vesnice");// vytvoreni okna
 
+    //InitWindow(1000, 500, "Vesnice");// vytvoreni okna
+
     screenWidth = GetScreenWidth();
     screenHeight = GetScreenHeight();
     
@@ -168,14 +186,22 @@ int main()
 
     int mousehold = 0;
 
+    int money = 50;
+
     //building stuff
     bool isdragg = 0;
     BuildingTemplate draggedTemplate;
     std::vector<BuildingTemplate> BuildingTemplate = {
         {"Basic House", 10, 5, GRAY,},
         {"Basic House2", 6, 7, BROWN,},
+        
     };
 
+    ShopTemplate draggedTemplateShop;
+    std::vector<ShopTemplate> ShopTemplate = {
+        {"Basic Shop", 5, 5, GRAY,},
+        {"Basic Shop2", 6, 7, BROWN,},
+    };
 
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
 
@@ -351,15 +377,52 @@ int main()
                         }
                     }
                     isdragg = 0;
-                }
-                
+                }                
+            }
+
+            if(shops && isdragg) {//když dům
+                draggedTemplateShop.draw(snapX,snapY);
+
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
+                {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
+
+                    int GigaNigaGridX = (snapX + gridArea) / GRID_SIZE;//jsem chtel gridX ale ten uz byl uzit
+                    int GigaNigaGridY = (snapY + gridArea) / GRID_SIZE;
+
+                    for (int x = 0; x < draggedTemplateShop.gridWidth; x++)
+                    {
+                        for (int y = 0; y < draggedTemplateShop.gridHeight; y++)
+                        {
+                            int targetX = GigaNigaGridX + x;
+                            int targetY = GigaNigaGridY + y;
+
+                            if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells) 
+                            {
+                                grid[targetX][targetY].barv = draggedTemplateShop.color; 
+                            }
+                        }
+                    }
+                    isdragg = 0;
+                }                
             }
 
             EndMode2D();
+
             //in game menu
             DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
+            DrawRectangle(0, 0, screenWidth, 50, Color(BROWN));
 
             float fromtop = 50;
+
+
+            GuiValueBox((Rectangle){500, 0, 100, 50}, "Money", &money, 0, 100, false);
+
+            if ((money >= 0)&&(money < 100)) {
+                money++;
+            }
+            else {
+                money = 0;
+            }
 
             if (GuiButton((Rectangle){0, fromtop, 100, 50}, "PATHS") && !build){
                 paths = true;
@@ -411,7 +474,8 @@ int main()
 
                 if (shops) {
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "SHOP 1")){
-                    
+                        draggedTemplateShop = ShopTemplate[0];
+                        isdragg = 1;
                     }
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "CANCEL")){
                         shops = false;
