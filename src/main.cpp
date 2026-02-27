@@ -164,6 +164,7 @@ int main()
     bool paths = 0;
     bool houses = 0;
     bool destroy = 0;
+    bool shops = 0;
 
     int mousehold = 0;
 
@@ -370,6 +371,7 @@ int main()
             }
             if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, "SHOPS") && !build){
                 build = true;
+                shops = true;
             }
 
             if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, "DESTROY") && !build){
@@ -386,6 +388,10 @@ int main()
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "STONE PATH")){
                         mousehold = TERRAIN_STONE_PATH;
                     }
+                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CANCEL")){
+                        paths = false;
+                        build = false;
+                    }
                 }
 
                 if(houses) {
@@ -396,6 +402,20 @@ int main()
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "HOUSE 2")){
                         draggedTemplate = BuildingTemplate[1];
                         isdragg = 1;
+                    }
+                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CANCEL")){
+                        houses = false;
+                        build = false;
+                    }
+                }
+
+                if (shops) {
+                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "SHOP 1")){
+                    
+                    }
+                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "CANCEL")){
+                        shops = false;
+                        build = false;
                     }
                 }
 
