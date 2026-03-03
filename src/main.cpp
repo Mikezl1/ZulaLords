@@ -36,7 +36,7 @@ struct BuildingTemplate
     int gridWidth;
     int gridHeight;
     Color color;
-    void draw(int drawX,int drawY);
+    void draw(int drawX, int drawY);
 };
 
 struct ShopTemplate
@@ -526,11 +526,6 @@ int main()
                     ofstream myfile ("save.txt");
                     if (myfile.is_open())
                     {
-                        myfile << grid[1][1].barv.r<< ' ';
-                        myfile << grid[1][1].barv.g << ' ';
-                        myfile << grid[1][1].barv.b << ' ';
-                        myfile << grid[1][1].drawX << ' ';
-                        myfile << grid[1][1].drawY << ' ';
                         myfile << grid[1][1].barv.a << endl;
                         myfile.close();
                     }
