@@ -199,7 +199,7 @@ int main()
 
     ShopTemplate draggedTemplateShop;
     std::vector<ShopTemplate> ShopTemplate = {
-        {"Basic Shop", 5, 5, GRAY,},
+        {"Basic Shop", 2, 3, GRAY,},
         {"Basic Shop2", 6, 7, BROWN,},
     };
 
@@ -274,8 +274,6 @@ int main()
             
             if(!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) DrawRectangle(snapX, snapY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
 
-            PrintAll(grid,camera);// vykresleni všech buněk ktere jsou vidět na obrazovce
-
             // Vykreslení gridu
             for (int x = -gridArea; x < gridArea; x += GRID_SIZE) {
                 DrawLine(x, -gridArea, x, gridArea, Color{ 50, 50, 80, 55 });
@@ -284,6 +282,8 @@ int main()
             for (int y = -gridArea; y < gridArea; y += GRID_SIZE) {
                 DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 55 });
             }
+
+            PrintAll(grid,camera);// vykresleni všech buněk ktere jsou vidět na obrazovce
 
             //line spawn veci
             int gridX = (snapX + gridArea) / GRID_SIZE;
@@ -360,15 +360,15 @@ int main()
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
                 {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
 
-                    int GigaNigaGridX = (snapX + gridArea) / GRID_SIZE;//jsem chtel gridX ale ten uz byl uzit
-                    int GigaNigaGridY = (snapY + gridArea) / GRID_SIZE;
+                    int HouseGridX = (snapX + gridArea) / GRID_SIZE;
+                    int HouseGridY = (snapY + gridArea) / GRID_SIZE;
 
                     for (int x = 0; x < draggedTemplate.gridWidth; x++)
                     {
                         for (int y = 0; y < draggedTemplate.gridHeight; y++)
                         {
-                            int targetX = GigaNigaGridX + x;
-                            int targetY = GigaNigaGridY + y;
+                            int targetX = HouseGridX + x;
+                            int targetY = HouseGridY + y;
 
                             if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells) 
                             {
@@ -380,21 +380,21 @@ int main()
                 }                
             }
 
-            if(shops && isdragg) {//když dům
+            if(shops && isdragg) {//když shop
                 draggedTemplateShop.draw(snapX,snapY);
 
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
                 {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
 
-                    int GigaNigaGridX = (snapX + gridArea) / GRID_SIZE;//jsem chtel gridX ale ten uz byl uzit
-                    int GigaNigaGridY = (snapY + gridArea) / GRID_SIZE;
+                    int ShopGridX = (snapX + gridArea) / GRID_SIZE;
+                    int ShopGridY = (snapY + gridArea) / GRID_SIZE;
 
                     for (int x = 0; x < draggedTemplateShop.gridWidth; x++)
                     {
                         for (int y = 0; y < draggedTemplateShop.gridHeight; y++)
                         {
-                            int targetX = GigaNigaGridX + x;
-                            int targetY = GigaNigaGridY + y;
+                            int targetX = ShopGridX + x;
+                            int targetY = ShopGridY + y;
 
                             if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells) 
                             {
