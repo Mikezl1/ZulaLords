@@ -2,6 +2,7 @@
 #include "raymath.h"
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 #define RAYGUI_IMPLEMENTATION
 
@@ -9,6 +10,9 @@
 #define GRID_SIZE 50 // Velikost ctverecku
 #define gridArea  50000// Velikost gridu
 #define cells gridArea * 2 / GRID_SIZE// počet buněk nebo kostek
+
+
+using namespace std;
 
 typedef enum {
     TERRAIN_BLANK,
@@ -234,7 +238,17 @@ int main()
                 run = true;
             }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, LoadButtonY + 100, buttonWidth, buttonHeight }, "Load game") && !settings) {
-                // nic zatim nedela
+                ifstream myfile ("save.txt");
+                    if (myfile.is_open())
+                    {
+                        myfile >> grid[1][1].barv.r;
+                        myfile >> grid[1][1].barv.g;
+                        myfile >> grid[1][1].barv.b;
+                        myfile >> grid[1][1].barv.a;
+                        myfile.close();
+                        run = true;
+                    }
+                    else cout << "Unable to open file";
             }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, SettingsButtonY + 100, buttonWidth, buttonHeight }, "Settings") && !settings) {
                 ClearBackground(YELLOW);
@@ -508,9 +522,23 @@ int main()
                 if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + buttonHeight, buttonWidth, buttonHeight}, "Resume Game")){
                     pause = false;
                 }
-                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 2*buttonHeight + pausemenuspacing, buttonWidth, buttonHeight }, "Load game")) {
+                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 2*buttonHeight + pausemenuspacing, buttonWidth, buttonHeight}, "Save Game")){
+                    ofstream myfile ("save.txt");
+                    if (myfile.is_open())
+                    {
+                        myfile << grid[1][1].barv.r<< ' ';
+                        myfile << grid[1][1].barv.g << ' ';
+                        myfile << grid[1][1].barv.b << ' ';
+                        myfile << grid[1][1].drawX << ' ';
+                        myfile << grid[1][1].drawY << ' ';
+                        myfile << grid[1][1].barv.a << endl;
+                        myfile.close();
+                    }
+                    else cout << "Unable to open file";
                 }
-                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 3*buttonHeight + 2*pausemenuspacing, buttonWidth, buttonHeight }, "To Main Menu")) {
+                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 3*buttonHeight + 2*pausemenuspacing, buttonWidth, buttonHeight }, "Load game")) {
+                }
+                if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 4*buttonHeight + 3*pausemenuspacing, buttonWidth, buttonHeight }, "To Main Menu")) {
                     pause = false;
                     run = false;
                 }
