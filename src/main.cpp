@@ -239,16 +239,24 @@ int main()
             }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, LoadButtonY + 100, buttonWidth, buttonHeight }, "Load game") && !settings) {
                 ifstream myfile ("save.txt");
-                    if (myfile.is_open())
-                    {
-                        myfile >> grid[1][1].barv.r;
-                        myfile >> grid[1][1].barv.g;
-                        myfile >> grid[1][1].barv.b;
-                        myfile >> grid[1][1].barv.a;
-                        myfile.close();
-                        run = true;
+                if (myfile.is_open()) {
+                    // 1. Reset grid to blank first
+                    for (int i = 0; i < cells; i++) {
+                        for (int j = 0; j < cells; j++) {
+                            grid[i][j].barv = TerrainColors[TERRAIN_BLANK];
+                        }
                     }
-                    else cout << "Unable to open file";
+
+                    // 2. Read only the objects that were saved
+                    int x, y, r, g, b, a;
+                    while (myfile >> x >> y >> r >> g >> b >> a) {
+                        if (x >= 0 && x < cells && y >= 0 && y < cells) {
+                            grid[x][y].barv = {(unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a};
+                        }
+                    }
+                    myfile.close();
+                    run = true;
+                }
             }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, SettingsButtonY + 100, buttonWidth, buttonHeight }, "Settings") && !settings) {
                 ClearBackground(YELLOW);
@@ -523,15 +531,44 @@ int main()
                     pause = false;
                 }
                 if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 2*buttonHeight + pausemenuspacing, buttonWidth, buttonHeight}, "Save Game")){
-                    ofstream myfile ("save.txt");
-                    if (myfile.is_open())
-                    {
-                        myfile << grid[1][1].barv.a << endl;
+                    ofstream myfile("save.txt");
+                    if (myfile.is_open()) {
+                        for (int i = 0; i < cells; i++) {
+                            for (int j = 0; j < cells; j++) {
+                                // Only save if the tile isn't empty
+                                if (grid[i][j].barv.a != 0) { 
+                                    // Save: GridX GridY R G B A
+                                    myfile << i << " " << j << " " 
+                                    << (int)grid[i][j].barv.r << " " 
+                                    << (int)grid[i][j].barv.g << " " 
+                                    << (int)grid[i][j].barv.b << " " 
+                                    << (int)grid[i][j].barv.a << "\n";
+                                }
+                            }
+                        }
                         myfile.close();
                     }
-                    else cout << "Unable to open file";
                 }
                 if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 3*buttonHeight + 2*pausemenuspacing, buttonWidth, buttonHeight }, "Load game")) {
+                    ifstream myfile ("save.txt");
+                    if (myfile.is_open()) {
+                        // 1. Reset grid to blank first
+                        for (int i = 0; i < cells; i++) {
+                            for (int j = 0; j < cells; j++) {
+                                grid[i][j].barv = TerrainColors[TERRAIN_BLANK];
+                            }
+                        }
+
+                        // 2. Read only the objects that were saved
+                        int x, y, r, g, b, a;
+                        while (myfile >> x >> y >> r >> g >> b >> a) {
+                            if (x >= 0 && x < cells && y >= 0 && y < cells) {
+                                grid[x][y].barv = {(unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a};
+                            }
+                        }
+                        myfile.close();
+                        run = true;
+                    }
                 }
                 if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 4*buttonHeight + 3*pausemenuspacing, buttonWidth, buttonHeight }, "To Main Menu")) {
                     pause = false;
