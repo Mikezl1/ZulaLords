@@ -550,25 +550,28 @@ int main()
                     }
                 }
                 if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 3*buttonHeight + 2*pausemenuspacing, buttonWidth, buttonHeight }, "Load game")) {
-                    ifstream myfile ("save.txt");
-                    if (myfile.is_open()) {
-                        // 1. Reset grid to blank first
-                        for (int i = 0; i < cells; i++) {
-                            for (int j = 0; j < cells; j++) {
-                                grid[i][j].barv = TerrainColors[TERRAIN_BLANK];
-                            }
-                        }
+                    DrawRectangle(pausemenuX, pausemenuY, pausemenuW, pausemenuH, Color{BROWN});
 
-                        // 2. Read only the objects that were saved
-                        int x, y, r, g, b, a;
-                        while (myfile >> x >> y >> r >> g >> b >> a) {
-                            if (x >= 0 && x < cells && y >= 0 && y < cells) {
-                                grid[x][y].barv = {(unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a};
-                            }
-                        }
-                        myfile.close();
-                        run = true;
-                    }
+
+                    // ifstream myfile ("save.txt");
+                    // if (myfile.is_open()) {
+                    //     // 1. Reset grid to blank first
+                    //     for (int i = 0; i < cells; i++) {
+                    //         for (int j = 0; j < cells; j++) {
+                    //             grid[i][j].barv = TerrainColors[TERRAIN_BLANK];
+                    //         }
+                    //     }
+
+                    //     // 2. Read only the objects that were saved
+                    //     int x, y, r, g, b, a;
+                    //     while (myfile >> x >> y >> r >> g >> b >> a) {
+                    //         if (x >= 0 && x < cells && y >= 0 && y < cells) {
+                    //             grid[x][y].barv = {(unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a};
+                    //         }
+                    //     }
+                    //     myfile.close();
+                    //     run = true;
+                    // }
                 }
                 if (GuiButton((Rectangle){ pausemenuX + pausemenuW /6, pausemenuY + 4*buttonHeight + 3*pausemenuspacing, buttonWidth, buttonHeight }, "To Main Menu")) {
                     pause = false;
