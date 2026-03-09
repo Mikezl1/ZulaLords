@@ -30,6 +30,24 @@ const Color TerrainColors[] = {
     [TERRAIN_LIMESTONE_WALL] = {217, 211, 199, 255}
 };
 
+typedef enum {
+    NPC_IDLE,
+    NPC_WALKING,
+    NPC_WALING_TO_WORK,
+    NPC_WORKING,
+    NPC_WALKING_TO_HOME,
+    NPC_SHOPPING
+} NPC_doing;
+
+typedef enum {
+    FOREST,
+    SAWMILL,
+    FARM,
+    FOOD_SHOP,
+    GOODS_SHOP,
+
+} NPC_work;
+
 struct BuildingTemplate
 {
     std::string name;
@@ -65,6 +83,22 @@ bool operator!=(const Color& a, const Color& b)
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
 }
 
+class NPC
+{
+    public:
+    char name[100];
+    bool clicked;
+    int x,y;
+    NPC_doing doing;
+    int amount;
+    int rad;
+    int age;
+    NPC_work work;
+    void draw();
+    private:
+
+};
+
 class Object
 {
     public:
@@ -75,6 +109,12 @@ class Object
     private:
 
 };
+
+void NPC::draw()
+{
+    DrawCircle(x, y, rad, RED); 
+    return;
+}
 
 void Object::draw()
 {
@@ -205,6 +245,12 @@ int main()
     std::vector<ShopTemplate> ShopTemplate = {
         {"Basic Shop", 2, 3, GRAY,},
         {"Basic Shop2", 6, 7, BROWN,},
+    };
+
+    NPC npc1[] = {
+        {"Bob", false, -50, 10, NPC_IDLE, npc1->amount++, 15, 20, FOREST},
+        {"Alice", false, 40, 20, NPC_WALKING, npc1->amount++,15, 30, SAWMILL},
+        {"Charlie", false, 100, 30, NPC_WORKING, npc1->amount++, 15, 27, FARM},
     };
 
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
@@ -375,6 +421,30 @@ int main()
               
             }
 
+            for(int i = 0; i < npc1->amount+1; i++) {
+                npc1[i].draw();
+            }
+
+            for(int i = 0; i < npc1->amount+1; i++) {
+                if ((mouseWorldPos.x <= npc1[i].x + npc1[i].rad && mouseWorldPos.x >= npc1[i].x - npc1[i].rad) && (mouseWorldPos.y <= npc1[i].y + npc1[i].rad && mouseWorldPos.y >= npc1[i].y - npc1[i].rad) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && npc1[i].clicked != true)
+                {
+                    npc1[i].clicked = true;
+                }
+                else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && npc1[i].clicked == true){
+                    npc1[i].clicked = false;
+                }
+            }    
+
+            for (int i =0; i < npc1->amount +1; i++)
+            {
+                if (npc1[i].clicked) {
+                    char age[100];
+                    DrawRectangle(npc1[i].x - 50, npc1[i].y - 100, 100, 50, Color{BROWN});
+                    DrawText(npc1[i].name, npc1[i].x - 50, npc1[i].y - 85, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].age);
+                    DrawText(age, npc1[i].x + 25, npc1[i].y - 85, 20, WHITE);
+                }
+            }
 
             if(houses && isdragg) {//když dům
                 draggedTemplate.draw(snapX,snapY);
