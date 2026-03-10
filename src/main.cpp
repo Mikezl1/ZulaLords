@@ -33,10 +33,11 @@ const Color TerrainColors[] = {
 typedef enum {
     NPC_IDLE,
     NPC_WALKING,
-    NPC_WALING_TO_WORK,
+    NPC_WALKING_TO_WORK,
     NPC_WORKING,
     NPC_WALKING_TO_HOME,
-    NPC_SHOPPING
+    NPC_SHOPPING,
+    NPC_HOME,
 } NPC_doing;
 
 typedef enum {
@@ -47,17 +48,6 @@ typedef enum {
     GOODS_SHOP,
     NONE,
 } NPC_work;
-
-typedef enum {
-    UP,
-    DOWN,
-    RIGHT,
-    LEFT,
-    UP_R,
-    UP_L,
-    DWN_R,
-    DWN_L
-} NPC_direction;
 
 struct BuildingTemplate
 {
@@ -95,13 +85,13 @@ void ShopTemplate::draw(int drawX,int drawY)
 bool operator!=(const Color& a, const Color& b)
 {
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
-}
+}   
 
 class NPC
 {
     public:
     char name[100];
-    bool clicked;
+    bool clicked = false;
     int x,y;
     NPC_doing doing;
     int amount;
@@ -109,10 +99,14 @@ class NPC
     int age;
     int speedX;
     int speedY;
+    int startX;
+    int startY;
+    int destinationX;
+    int destinationY;
+    float waitTimer = 0.0f;
+    float targetWaitTime = 0.0f;
     NPC_work work;
-    NPC_direction direction;
     void NPC_movement();
-    void NPC_direction();
     void draw();
     private:
 
@@ -136,39 +130,58 @@ void NPC::draw()
 }
 
 void NPC::NPC_movement() {
-    if (doing == NPC_WALKING)
-    {
-        if (direction == UP) y -= speedY;
-        else if (direction == DOWN) y += speedY;
-        else if (direction == RIGHT) x += speedX;
-        else if (direction == LEFT) x -= speedX;
-        else if (direction == UP_R) {
-            y -= speedY;
-            x += speedX;
-        } 
-        else if (direction == UP_L) {
-            y -= speedY;
-            x -= speedX;
-        }
-        else if (direction == DWN_R) {
-            y += speedY;
-            x += speedX;
-        }
-        else if (direction == DWN_L) {
-            y += speedY;
-            x -= speedX;
+    if (doing == NPC_IDLE) {
+        waitTimer += GetFrameTime();
+
+        if (waitTimer >= targetWaitTime) {    
+            doing = NPC_WALKING;
+            startX = x;
+            startY = y;
+            destinationX = GetRandomValue(-500, 500) + startX;
+            destinationY = GetRandomValue(-500, 500) + startY;
+
+            waitTimer = 0.0f;
         }
     }
+    else if (doing == NPC_WALKING)
+    {
+        int speed = 3; 
+
+        if (abs(destinationX - x) <= speed) {
+            x = destinationX;
+            speedX = 0;
+        } 
+        else if (x < destinationX) {
+            x += speed;
+            speedX = speed;
+        } 
+        else if (x > destinationX) {
+            x -= speed;
+            speedX = -speed;
+        }
+
+        if (abs(destinationY - y) <= speed) {
+            y = destinationY;
+            speedY = 0;
+        } 
+        else if (y < destinationY) {
+            y += speed;
+            speedY = speed;
+        } 
+        else if (y > destinationY) {
+            y -= speed;
+            speedY = -speed;
+        }
+
+        if (x == destinationX && y == destinationY) {
+            doing = NPC_IDLE; 
+
+            targetWaitTime = (float)GetRandomValue(1, 8);
+        }
+    }    
 }
 
 
-// void NPC::NPC_direction () {
-//     if (!walk) {
-
-//     }
-//     direction = GetRandomValue(0, 8);
-
-// }
 
 void Object::draw()
 {
@@ -407,6 +420,11 @@ int main()
                 DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 55 });
             }
 
+
+            for(int i = 0; i < alive_npc+1; i++) {
+                npc1[i].draw();
+            }
+
             PrintAll(grid,camera);// vykresleni všech buněk ktere jsou vidět na obrazovce
 
             //line spawn veci
@@ -476,10 +494,6 @@ int main()
             }
 
             for(int i = 0; i < alive_npc+1; i++) {
-                npc1[i].draw();
-            }
-
-            for(int i = 0; i < alive_npc+1; i++) {
                 if ((mouseWorldPos.x <= npc1[i].x + npc1[i].rad && mouseWorldPos.x >= npc1[i].x - npc1[i].rad) && (mouseWorldPos.y <= npc1[i].y + npc1[i].rad && mouseWorldPos.y >= npc1[i].y - npc1[i].rad) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && npc1[i].clicked != true)
                 {
                     npc1[i].clicked = true;
@@ -492,11 +506,28 @@ int main()
             for (int i =0; i < alive_npc+1; i++)
             {
                 if (npc1[i].clicked) {
+
+                    camera.target = {(float)npc1[i].x, (float)npc1[i].y};
+
                     char age[100];
                     DrawRectangle(npc1[i].x - 50, npc1[i].y - 100, 100, 50, Color{BROWN});
                     DrawText(npc1[i].name, npc1[i].x - 50, npc1[i].y - 85, 20, WHITE);
                     sprintf(age, "%d", npc1[i].age);
                     DrawText(age, npc1[i].x + 25, npc1[i].y - 85, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].doing);
+                    DrawText(age, npc1[i].x + 50, npc1[i].y - 85, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].destinationX);
+                    DrawText(age, npc1[i].x + 75, npc1[i].y - 85, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].destinationY);
+                    DrawText(age, npc1[i].x + 125, npc1[i].y - 85, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].x);
+                    DrawText(age, npc1[i].x + 175, npc1[i].y - 100, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].y);
+                    DrawText(age, npc1[i].x + 225, npc1[i].y - 50, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].startX);
+                    DrawText(age, npc1[i].x + 275, npc1[i].y - 85, 20, WHITE);
+                    sprintf(age, "%d", npc1[i].startY);
+                    DrawText(age, npc1[i].x + 325, npc1[i].y - 85, 20, WHITE);
                 }
             }
 
@@ -533,14 +564,14 @@ int main()
                     npc1[alive_npc].rad = 15;
                     npc1[alive_npc].amount = npc1->amount + 1;
                     npc1[alive_npc].work = NONE;
-                    npc1[alive_npc].direction = UP;
-                    npc1[alive_npc].doing = NPC_WALKING;
+                    npc1[alive_npc].doing = NPC_IDLE;
                     npc1[alive_npc].age = 20;
+                    npc1[alive_npc].clicked = false;
                     sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
 
                     isdragg = 0;
                 }
-                else if ((money < draggedTemplate.price) && isdragg) {
+                else if (money < draggedTemplate.price) {
                     no_money = true;
                 }
             }
@@ -671,6 +702,7 @@ int main()
                 {
                     paths = false;
                     houses = false;
+                    shops = false;
                     destroy = false;
                     build = false;
                 }
