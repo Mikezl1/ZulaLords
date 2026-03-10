@@ -14,6 +14,8 @@
 
 using namespace std;
 
+std::vector<Vector2> activeShops;
+
 typedef enum {
     TERRAIN_BLANK,
     TERRAIN_DIRT_PATH,
@@ -37,6 +39,7 @@ typedef enum {
     NPC_WORKING,
     NPC_WALKING_TO_HOME,
     NPC_SHOPPING,
+    NPC_WALKING_TO_SHOP,
     NPC_HOME,
 } NPC_doing;
 
@@ -97,6 +100,13 @@ class NPC
     int amount;
     int rad;
     int age;
+    int workplace;
+    int workplaceX;
+    int workplaceY;
+    int shopX;
+    int shopY;
+    int homeX;
+    int homeY;
     int speedX;
     int speedY;
     int startX;
@@ -143,9 +153,69 @@ void NPC::NPC_movement() {
             waitTimer = 0.0f;
         }
     }
-    else if (doing == NPC_WALKING)
+    else if (doing == NPC_WORKING) {
+        waitTimer += GetFrameTime();
+
+        if (waitTimer >= targetWaitTime) {    
+            doing = NPC_WALKING_TO_HOME;
+            startX = x;
+            startY = y;
+            waitTimer = 0.0f;
+        }
+    }
+    else if (doing == NPC_SHOPPING) {
+        waitTimer += GetFrameTime();
+
+        if (waitTimer >= targetWaitTime) {    
+            doing = NPC_WALKING_TO_HOME;
+            startX = x;
+            startY = y;
+            waitTimer = 0.0f;
+        }
+    }
+    else if (doing == NPC_HOME) {
+        waitTimer += GetFrameTime();
+
+        if (waitTimer >= targetWaitTime) {    
+            doing = NPC_WALKING_TO_SHOP;
+            startX = x;
+            startY = y;
+            waitTimer = 0.0f;
+        }
+    }
+    else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP)
     {
         int speed = 3; 
+
+        if (doing == NPC_WALKING_TO_WORK)
+        {
+            destinationX = workplaceX;
+            destinationY = workplaceY;
+        }
+        else if (doing == NPC_WALKING_TO_HOME)
+        {
+            destinationX = homeX;
+            destinationY = homeY;
+        }
+        else if (doing == NPC_WALKING_TO_SHOP)
+        {
+            float closestDistance = -1.0f;
+            Vector2 closestShop = {0, 0};
+            Vector2 currentPosition = {(float)x, (float)y};
+
+            for (size_t i = 0; i < activeShops.size(); i++) {
+                float dist = Vector2Distance(currentPosition, activeShops[i]);
+
+                if (closestDistance < 0 || dist < closestDistance) {
+                    closestDistance = dist;
+                    closestShop = activeShops[i];
+                }
+            }
+
+
+            destinationX = closestShop.x;
+            destinationY = closestShop.y;
+        }
 
         if (abs(destinationX - x) <= speed) {
             x = destinationX;
@@ -174,9 +244,22 @@ void NPC::NPC_movement() {
         }
 
         if (x == destinationX && y == destinationY) {
-            doing = NPC_IDLE; 
-
-            targetWaitTime = (float)GetRandomValue(1, 8);
+            if (doing == NPC_WALKING_TO_WORK) {
+                doing = NPC_WORKING;
+                targetWaitTime = 60;
+            } 
+            else if (doing == NPC_WALKING_TO_HOME) {
+                doing = NPC_HOME;
+                targetWaitTime = 20;
+            }
+            else if (doing == NPC_WALKING_TO_SHOP) {
+                doing = NPC_SHOPPING;
+                targetWaitTime = 30;
+            }
+            else {
+                doing = NPC_IDLE; 
+                targetWaitTime = (float)GetRandomValue(1, 8);
+            }
         }
     }    
 }
@@ -559,12 +642,14 @@ int main()
                     npc1[alive_npc] = NPC();
                     npc1[alive_npc].x = 100;
                     npc1[alive_npc].y = 100;
+                    npc1[alive_npc].homeX = snapX + draggedTemplate.gridWidth/2 * GRID_SIZE;
+                    npc1[alive_npc].homeY = snapY + draggedTemplate.gridHeight/2 * GRID_SIZE;
                     npc1[alive_npc].speedX = 0;
                     npc1[alive_npc].speedY = 0;
                     npc1[alive_npc].rad = 15;
                     npc1[alive_npc].amount = npc1->amount + 1;
                     npc1[alive_npc].work = NONE;
-                    npc1[alive_npc].doing = NPC_IDLE;
+                    npc1[alive_npc].doing = NPC_WALKING_TO_HOME;
                     npc1[alive_npc].age = 20;
                     npc1[alive_npc].clicked = false;
                     sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
@@ -602,6 +687,11 @@ int main()
                         }
                     }
                     money -= draggedTemplateShop.price;
+
+                    float shopCenterX = snapX + draggedTemplateShop.gridWidth/2.0f * GRID_SIZE;
+                    float shopCenterY = snapY + draggedTemplateShop.gridHeight/2.0f * GRID_SIZE;
+
+                    activeShops.push_back({shopCenterX, shopCenterY});
 
                     isdragg = 0;
                 }     
