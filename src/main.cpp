@@ -45,14 +45,27 @@ typedef enum {
     FARM,
     FOOD_SHOP,
     GOODS_SHOP,
-
+    NONE,
 } NPC_work;
+
+typedef enum {
+    UP,
+    DOWN,
+    RIGHT,
+    LEFT,
+    UP_R,
+    UP_L,
+    DWN_R,
+    DWN_L
+} NPC_direction;
 
 struct BuildingTemplate
 {
     std::string name;
     int gridWidth;
     int gridHeight;
+    int capacity;
+    int price;
     Color color;
     void draw(int drawX, int drawY);
 };
@@ -62,6 +75,7 @@ struct ShopTemplate
     std::string name;
     int gridWidth;
     int gridHeight;
+    int price;
     Color color;
     void draw(int drawX,int drawY);
 };
@@ -93,7 +107,12 @@ class NPC
     int amount;
     int rad;
     int age;
+    int speedX;
+    int speedY;
     NPC_work work;
+    NPC_direction direction;
+    void NPC_movement();
+    void NPC_direction();
     void draw();
     private:
 
@@ -115,6 +134,41 @@ void NPC::draw()
     DrawCircle(x, y, rad, RED); 
     return;
 }
+
+void NPC::NPC_movement() {
+    if (doing == NPC_WALKING)
+    {
+        if (direction == UP) y -= speedY;
+        else if (direction == DOWN) y += speedY;
+        else if (direction == RIGHT) x += speedX;
+        else if (direction == LEFT) x -= speedX;
+        else if (direction == UP_R) {
+            y -= speedY;
+            x += speedX;
+        } 
+        else if (direction == UP_L) {
+            y -= speedY;
+            x -= speedX;
+        }
+        else if (direction == DWN_R) {
+            y += speedY;
+            x += speedX;
+        }
+        else if (direction == DWN_L) {
+            y += speedY;
+            x -= speedX;
+        }
+    }
+}
+
+
+// void NPC::NPC_direction () {
+//     if (!walk) {
+
+//     }
+//     direction = GetRandomValue(0, 8);
+
+// }
 
 void Object::draw()
 {
@@ -227,32 +281,28 @@ int main()
     bool houses = 0;
     bool destroy = 0;
     bool shops = 0;
+    bool no_money = 0;
 
     int mousehold = 0;
 
-    int money = 50;
+    int money = 100;
 
     //building stuff
     bool isdragg = 0;
     BuildingTemplate draggedTemplate;
     std::vector<BuildingTemplate> BuildingTemplate = {
-        {"Basic House", 10, 5, GRAY,},
-        {"Basic House2", 6, 7, BROWN,},
-        
+        {"Basic House", 10, 5, 4, 25, GRAY,},
+        {"Basic House2", 6, 7, 6, 50, BROWN,},
     };
 
     ShopTemplate draggedTemplateShop;
     std::vector<ShopTemplate> ShopTemplate = {
-        {"Basic Shop", 2, 3, GRAY,},
-        {"Basic Shop2", 6, 7, BROWN,},
+        {"Basic Shop", 2, 3, 5, GRAY,},
+        {"Basic Shop2", 6, 7, 7, BROWN,},
     };
 
-    NPC npc1[] = {
-        {"Bob", false, -50, 10, NPC_IDLE, npc1->amount++, 15, 20, FOREST},
-        {"Alice", false, 40, 20, NPC_WALKING, npc1->amount++,15, 30, SAWMILL},
-        {"Charlie", false, 100, 30, NPC_WORKING, npc1->amount++, 15, 27, FARM},
-    };
-
+    NPC npc1[10000];
+    int alive_npc = 0;
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
 
     //grid setup
@@ -325,6 +375,12 @@ int main()
         //game
         if(run) {
 
+            if (!pause) {
+                for(int i = 0; i < alive_npc+1; i++) {
+                    npc1[i].NPC_movement();
+                }
+            }
+
             if(IsKeyPressed(KEY_ESCAPE) && !build) {
                 pause = !pause;
             }
@@ -386,23 +442,21 @@ int main()
 
             if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
             {
-                    int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
-                    int EndX = (gridX > StartGridX) ? gridX : StartGridX;
-                    int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
-                    int EndY = (gridY > StartGridY) ? gridY : StartGridY;
+                int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
+                int EndX = (gridX > StartGridX) ? gridX : StartGridX;
+                int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
+                int EndY = (gridY > StartGridY) ? gridY : StartGridY;
                     
-                    for (int i = StartX; i <= EndX; i++)
+                for (int i = StartX; i <= EndX; i++)
+                {
+                    for (int ii = StartY; ii <= EndY; ii++)
                     {
-                        for (int ii = StartY; ii <= EndY; ii++)
+                        if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
                         {
-                            if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
-                            {
-                                grid[i][ii].barv = TerrainColors[mousehold] ;
-                            }
+                            grid[i][ii].barv = TerrainColors[mousehold] ;
                         }
                     }
-
-                //}
+                }
             }
 
             // normal spawn věci
@@ -421,11 +475,11 @@ int main()
               
             }
 
-            for(int i = 0; i < npc1->amount+1; i++) {
+            for(int i = 0; i < alive_npc+1; i++) {
                 npc1[i].draw();
             }
 
-            for(int i = 0; i < npc1->amount+1; i++) {
+            for(int i = 0; i < alive_npc+1; i++) {
                 if ((mouseWorldPos.x <= npc1[i].x + npc1[i].rad && mouseWorldPos.x >= npc1[i].x - npc1[i].rad) && (mouseWorldPos.y <= npc1[i].y + npc1[i].rad && mouseWorldPos.y >= npc1[i].y - npc1[i].rad) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && npc1[i].clicked != true)
                 {
                     npc1[i].clicked = true;
@@ -435,7 +489,7 @@ int main()
                 }
             }    
 
-            for (int i =0; i < npc1->amount +1; i++)
+            for (int i =0; i < alive_npc+1; i++)
             {
                 if (npc1[i].clicked) {
                     char age[100];
@@ -449,7 +503,7 @@ int main()
             if(houses && isdragg) {//když dům
                 draggedTemplate.draw(snapX,snapY);
 
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && money >= draggedTemplate.price)
                 {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
 
                     int HouseGridX = (snapX + gridArea) / GRID_SIZE;
@@ -462,20 +516,42 @@ int main()
                             int targetX = HouseGridX + x;
                             int targetY = HouseGridY + y;
 
-                            if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells) 
+                            if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells)
                             {
-                                grid[targetX][targetY].barv = draggedTemplate.color; 
+                                grid[targetX][targetY].barv = draggedTemplate.color;
                             }
                         }
                     }
+                    money -= draggedTemplate.price;
+
+                    alive_npc++;
+                    npc1[alive_npc] = NPC();
+                    npc1[alive_npc].x = 100;
+                    npc1[alive_npc].y = 100;
+                    npc1[alive_npc].speedX = 0;
+                    npc1[alive_npc].speedY = 0;
+                    npc1[alive_npc].rad = 15;
+                    npc1[alive_npc].amount = npc1->amount + 1;
+                    npc1[alive_npc].work = NONE;
+                    npc1[alive_npc].direction = UP;
+                    npc1[alive_npc].doing = NPC_WALKING;
+                    npc1[alive_npc].age = 20;
+                    sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
+
                     isdragg = 0;
-                }                
+                }
+                else if ((money < draggedTemplate.price) && isdragg) {
+                    no_money = true;
+                }
+            }
+            else {
+                no_money = false;
             }
 
             if(shops && isdragg) {//když shop
                 draggedTemplateShop.draw(snapX,snapY);
 
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && money >= draggedTemplateShop.price)
                 {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
 
                     int ShopGridX = (snapX + gridArea) / GRID_SIZE;
@@ -494,11 +570,23 @@ int main()
                             }
                         }
                     }
+                    money -= draggedTemplateShop.price;
+
                     isdragg = 0;
-                }                
+                }     
+                else if (money < draggedTemplateShop.price) {
+                    no_money = true;
+                }           
+            }
+            else {
+                no_money = false;
             }
 
             EndMode2D();
+
+            if (no_money){
+                DrawText("Not enough money",  screenWidth/2 - 200, screenHeight/2, 40, WHITE);
+            }    
 
             //in game menu
             DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
@@ -508,13 +596,8 @@ int main()
 
 
             GuiValueBox((Rectangle){500, 0, 100, 50}, "Money", &money, 0, 100, false);
+            GuiValueBox((Rectangle){650, 0, 100, 50}, "Pople", &alive_npc, 0, 10000, false);
 
-            if ((money >= 0)&&(money < 100)) {
-                money++;
-            }
-            else {
-                money = 0;
-            }
 
             if (GuiButton((Rectangle){0, fromtop, 100, 50}, "PATHS") && !build){
                 paths = true;
