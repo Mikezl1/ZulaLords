@@ -60,7 +60,7 @@ struct BuildingTemplate
     int capacity;
     int price;
     Color color;
-    void draw(int drawX, int drawY);
+    void draw(int drawX, int drawY, bool rotate);
 };
 
 struct ShopTemplate
@@ -70,18 +70,28 @@ struct ShopTemplate
     int gridHeight;
     int price;
     Color color;
-    void draw(int drawX,int drawY);
+    void draw(int drawX, int drawY, bool rotate);
 };
 
-void BuildingTemplate::draw(int drawX,int drawY)
+void BuildingTemplate::draw(int drawX,int drawY, bool rotate)
 {
-    DrawRectangle(drawX, drawY, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
+    if (rotate) {
+        DrawRectangle(drawX - gridHeight/2 *GRID_SIZE, drawY - gridWidth/2 * GRID_SIZE, gridHeight * GRID_SIZE, gridWidth * GRID_SIZE, color);
+    }
+    else {
+        DrawRectangle(drawX - gridWidth/2 * GRID_SIZE, drawY - gridHeight/2 *GRID_SIZE, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
+    }
     return;
 }
 
-void ShopTemplate::draw(int drawX,int drawY)
+void ShopTemplate::draw(int drawX,int drawY, bool rotate)
 {
-    DrawRectangle(drawX, drawY, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
+    if (rotate) {
+        DrawRectangle(drawX - gridHeight/2 * GRID_SIZE, drawY - gridHeight/2 *GRID_SIZE, gridHeight * GRID_SIZE, gridWidth * GRID_SIZE, color);
+    }
+    else {
+        DrawRectangle(drawX - gridHeight/2 * GRID_SIZE, drawY - gridHeight/2 *GRID_SIZE, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
+    }
     return;
 }
 
@@ -122,17 +132,6 @@ class NPC
 
 };
 
-class Object
-{
-    public:
-    Color barv;
-    int x,y;
-    int drawX, drawY;
-    void draw();
-    private:
-
-};
-
 void NPC::draw()
 {
     DrawCircle(x, y, rad, RED); 
@@ -143,7 +142,7 @@ void NPC::NPC_movement() {
     if (doing == NPC_IDLE) {
         waitTimer += GetFrameTime();
 
-        if (waitTimer >= targetWaitTime) {    
+        if (waitTimer >= targetWaitTime) {
             doing = NPC_WALKING;
             startX = x;
             startY = y;
@@ -264,12 +263,22 @@ void NPC::NPC_movement() {
     }    
 }
 
+class Object
+{
+    public:
+    Color barv;
+    int x,y;
+    int drawX, drawY;
+    void draw();
+    private:
 
+};
 
 void Object::draw()
 {
-    if(barv != TerrainColors[TERRAIN_BLANK])
-    DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, barv);
+    if(barv != TerrainColors[TERRAIN_BLANK]) {
+        DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, barv);
+    }
     
     return;
 }
@@ -372,23 +381,27 @@ int main()
     bool run = false;
     bool pause = false;
     bool settings = false;
-    bool build = 0;
-    bool paths = 0;
-    bool houses = 0;
-    bool destroy = 0;
-    bool shops = 0;
-    bool no_money = 0;
+    bool build = false;
+    bool paths = false;
+    bool houses = false;
+    bool destroy = false;
+    bool shops = false;
+    bool no_money = false;
+    bool rotate = false;
 
     int mousehold = 0;
 
     int money = 100;
 
+    int rotatedWidth;
+    int rotatedHeight;
+
     //building stuff
     bool isdragg = 0;
     BuildingTemplate draggedTemplate;
     std::vector<BuildingTemplate> BuildingTemplate = {
-        {"Basic House", 10, 5, 4, 25, GRAY,},
-        {"Basic House2", 6, 7, 6, 50, BROWN,},
+        {"Basic House", 7, 5, 4, 25, GRAY,},
+        {"Basic House2", 7, 9, 6, 50, BROWN,},
     };
 
     ShopTemplate draggedTemplateShop;
@@ -615,17 +628,39 @@ int main()
             }
 
             if(houses && isdragg) {//když dům
-                draggedTemplate.draw(snapX,snapY);
+                if (IsKeyPressed(KEY_R) || rotate) {
+                    if (IsKeyPressed(KEY_R) && rotate) {
+                        rotate = false;
+                    }
+                    else {
+                        rotate = true;
+                    }
+                }
+
+                draggedTemplate.draw(snapX,snapY, rotate);
 
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && money >= draggedTemplate.price)
                 {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
+                    int HouseGridX;
+                    int HouseGridY;
 
-                    int HouseGridX = (snapX + gridArea) / GRID_SIZE;
-                    int HouseGridY = (snapY + gridArea) / GRID_SIZE;
+                    if (rotate) {
 
-                    for (int x = 0; x < draggedTemplate.gridWidth; x++)
+                        HouseGridX = (snapX - draggedTemplate.gridHeight/2*GRID_SIZE + gridArea) / GRID_SIZE;
+                        HouseGridY = (snapY - draggedTemplate.gridWidth/2*GRID_SIZE + gridArea) / GRID_SIZE;
+                        rotatedWidth = draggedTemplate.gridHeight;
+                        rotatedHeight = draggedTemplate.gridWidth;
+                    }
+                    else {
+                        HouseGridX = (snapX - draggedTemplate.gridWidth/2*GRID_SIZE + gridArea) / GRID_SIZE;
+                        HouseGridY = (snapY - draggedTemplate.gridHeight/2*GRID_SIZE + gridArea) / GRID_SIZE;
+                        rotatedWidth = draggedTemplate.gridWidth;
+                        rotatedHeight = draggedTemplate.gridHeight;
+                    }
+                    
+                    for (int x = 0; x < rotatedWidth; x++)
                     {
-                        for (int y = 0; y < draggedTemplate.gridHeight; y++)
+                        for (int y = 0; y < rotatedHeight; y++)
                         {
                             int targetX = HouseGridX + x;
                             int targetY = HouseGridY + y;
@@ -638,21 +673,21 @@ int main()
                     }
                     money -= draggedTemplate.price;
 
-                    alive_npc++;
-                    npc1[alive_npc] = NPC();
-                    npc1[alive_npc].x = 100;
-                    npc1[alive_npc].y = 100;
-                    npc1[alive_npc].homeX = snapX + draggedTemplate.gridWidth/2 * GRID_SIZE;
-                    npc1[alive_npc].homeY = snapY + draggedTemplate.gridHeight/2 * GRID_SIZE;
-                    npc1[alive_npc].speedX = 0;
-                    npc1[alive_npc].speedY = 0;
-                    npc1[alive_npc].rad = 15;
-                    npc1[alive_npc].amount = npc1->amount + 1;
-                    npc1[alive_npc].work = NONE;
-                    npc1[alive_npc].doing = NPC_WALKING_TO_HOME;
-                    npc1[alive_npc].age = 20;
-                    npc1[alive_npc].clicked = false;
-                    sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
+                    // alive_npc++;
+                    // npc1[alive_npc] = NPC();
+                    // npc1[alive_npc].x = snapX + draggedTemplate.gridWidth/2 * GRID_SIZE;
+                    // npc1[alive_npc].y = snapY + draggedTemplate.gridHeight/2 * GRID_SIZE;
+                    // npc1[alive_npc].homeX = snapX + draggedTemplate.gridWidth/2 * GRID_SIZE;
+                    // npc1[alive_npc].homeY = snapY + draggedTemplate.gridHeight/2 * GRID_SIZE;
+                    // npc1[alive_npc].speedX = 0;
+                    // npc1[alive_npc].speedY = 0;
+                    // npc1[alive_npc].rad = 15;
+                    // npc1[alive_npc].amount = npc1->amount + 1;
+                    // npc1[alive_npc].work = NONE;
+                    // npc1[alive_npc].doing = NPC_HOME;
+                    // npc1[alive_npc].age = 20;
+                    // npc1[alive_npc].clicked = false;
+                    // sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
 
                     isdragg = 0;
                 }
@@ -665,17 +700,42 @@ int main()
             }
 
             if(shops && isdragg) {//když shop
-                draggedTemplateShop.draw(snapX,snapY);
+
+                if (IsKeyPressed(KEY_R) || rotate) {
+                    if (IsKeyPressed(KEY_R) && rotate) {
+                        rotate = false;
+                    }
+                    else {
+                        rotate = true;
+                    }
+                }
+
+                draggedTemplateShop.draw(snapX, snapY, rotate);
 
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && money >= draggedTemplateShop.price)
                 {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
+                    int ShopGridX;
+                    int ShopGridY;
+                    int rotatedShopWidth;
+                    int rotatedShopHeight;
 
-                    int ShopGridX = (snapX + gridArea) / GRID_SIZE;
-                    int ShopGridY = (snapY + gridArea) / GRID_SIZE;
 
-                    for (int x = 0; x < draggedTemplateShop.gridWidth; x++)
+                    if (rotate) {
+                        ShopGridX = (snapX - draggedTemplateShop.gridHeight/2 * GRID_SIZE + gridArea) / GRID_SIZE;
+                        ShopGridY = (snapY - draggedTemplateShop.gridWidth/2 * GRID_SIZE + gridArea) / GRID_SIZE;
+                        rotatedShopWidth = draggedTemplateShop.gridHeight;
+                        rotatedShopHeight = draggedTemplateShop.gridWidth;
+                    }
+                    else {
+                        ShopGridX = (snapX - draggedTemplateShop.gridWidth/2 * GRID_SIZE + gridArea) / GRID_SIZE;
+                        ShopGridY = (snapY - draggedTemplateShop.gridHeight/2 * GRID_SIZE + gridArea) / GRID_SIZE;
+                        rotatedShopWidth = draggedTemplateShop.gridWidth;
+                        rotatedShopHeight = draggedTemplateShop.gridHeight;
+                    }
+
+                    for (int x = 0; x < rotatedShopWidth; x++)
                     {
-                        for (int y = 0; y < draggedTemplateShop.gridHeight; y++)
+                        for (int y = 0; y < rotatedShopHeight; y++)
                         {
                             int targetX = ShopGridX + x;
                             int targetY = ShopGridY + y;
@@ -686,6 +746,7 @@ int main()
                             }
                         }
                     }
+
                     money -= draggedTemplateShop.price;
 
                     float shopCenterX = snapX + draggedTemplateShop.gridWidth/2.0f * GRID_SIZE;
