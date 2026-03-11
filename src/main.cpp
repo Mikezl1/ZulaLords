@@ -60,10 +60,21 @@ struct BuildingTemplate
     int capacity;
     int price;
     Color color;
+    Texture2D textura;
     void draw(int drawX, int drawY, bool rotate);
+    void SetPosition(int x, int y)
+    {
+        drawX = x; drawY = y;
+        return;
+    }
+    int drawX , drawY;
+    void drawTexture()
+    {
+        DrawTexture(textura, drawX,drawY, color);
+    }
 };
 
-struct ShopTemplate
+struct ShopTemplate// nevim proc mam dvakrat temer identickou strukturu ale ok...
 {
     std::string name;
     int gridWidth;
@@ -397,6 +408,8 @@ int main()
     int rotatedHeight;
 
     //building stuff
+    std::vector<BuildingTemplate> ConstructedBuildings;
+    ConstructedBuildings.reserve(100);
     bool isdragg = 0;
     BuildingTemplate draggedTemplate;
     std::vector<BuildingTemplate> BuildingTemplate = {
@@ -404,6 +417,11 @@ int main()
         {"Basic House2", 7, 9, 6, 50, BROWN,},
     };
 
+
+    BuildingTemplate[0].textura = LoadTexture("dum22.png");
+    GenTextureMipmaps(&BuildingTemplate[0].textura);
+    SetTextureFilter(BuildingTemplate[0].textura, TEXTURE_FILTER_TRILINEAR); 
+    
     ShopTemplate draggedTemplateShop;
     std::vector<ShopTemplate> ShopTemplate = {
         {"Basic Shop", 2, 3, 5, GRAY,},
@@ -638,6 +656,7 @@ int main()
                 }
 
                 draggedTemplate.draw(snapX,snapY, rotate);
+                DrawTexture(draggedTemplate.textura,snapX-GRID_SIZE*3,snapY-GRID_SIZE*2,draggedTemplate.color);
 
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && money >= draggedTemplate.price)
                 {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
@@ -672,7 +691,8 @@ int main()
                         }
                     }
                     money -= draggedTemplate.price;
-
+                    draggedTemplate.SetPosition(snapX-GRID_SIZE*(draggedTemplate.gridWidth/2),snapY-GRID_SIZE*(draggedTemplate.gridHeight/2));
+                    ConstructedBuildings.emplace_back(draggedTemplate);
                     // alive_npc++;
                     // npc1[alive_npc] = NPC();
                     // npc1[alive_npc].x = snapX + draggedTemplate.gridWidth/2 * GRID_SIZE;
@@ -762,6 +782,11 @@ int main()
             }
             else {
                 no_money = false;
+            }
+
+            //draw buildings
+            for (auto& budova : ConstructedBuildings) {
+                budova.drawTexture();
             }
 
             EndMode2D();
