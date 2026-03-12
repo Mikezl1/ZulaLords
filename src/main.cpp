@@ -7,10 +7,10 @@
 #define RAYGUI_IMPLEMENTATION
 
 #include "raygui.h"
-#define GRID_SIZE 50 // Velikost ctverecku
-#define gridArea  50000// Velikost gridu
-#define cells gridArea * 2 / GRID_SIZE// počet buněk nebo kostek
 
+#include "constants.h"
+#include "npc.h"
+#include "buildings.h"
 
 using namespace std;
 
@@ -32,48 +32,6 @@ const Color TerrainColors[] = {
     [TERRAIN_LIMESTONE_WALL] = {217, 211, 199, 255}
 };
 
-typedef enum {
-    NPC_IDLE,
-    NPC_WALKING,
-    NPC_WALKING_TO_WORK,
-    NPC_WORKING,
-    NPC_WALKING_TO_HOME,
-    NPC_SHOPPING,
-    NPC_WALKING_TO_SHOP,
-    NPC_HOME,
-} NPC_doing;
-
-typedef enum {
-    FOREST,
-    SAWMILL,
-    FARM,
-    FOOD_SHOP,
-    GOODS_SHOP,
-    NONE,
-} NPC_work;
-
-struct BuildingTemplate
-{
-    std::string name;
-    int gridWidth;
-    int gridHeight;
-    int capacity;
-    int price;
-    Color color;
-    Texture2D textura;
-    void draw(int drawX, int drawY, bool rotate);
-    void SetPosition(int x, int y)
-    {
-        drawX = x; drawY = y;
-        return;
-    }
-    int drawX , drawY;
-    void drawTexture()
-    {
-        DrawTexture(textura, drawX,drawY, color);
-    }
-};
-
 struct ShopTemplate// nevim proc mam dvakrat temer identickou strukturu ale ok...
 {
     std::string name;
@@ -83,17 +41,6 @@ struct ShopTemplate// nevim proc mam dvakrat temer identickou strukturu ale ok..
     Color color;
     void draw(int drawX, int drawY, bool rotate);
 };
-
-void BuildingTemplate::draw(int drawX,int drawY, bool rotate)
-{
-    if (rotate) {
-        DrawRectangle(drawX - gridHeight/2 *GRID_SIZE, drawY - gridWidth/2 * GRID_SIZE, gridHeight * GRID_SIZE, gridWidth * GRID_SIZE, color);
-    }
-    else {
-        DrawRectangle(drawX - gridWidth/2 * GRID_SIZE, drawY - gridHeight/2 *GRID_SIZE, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
-    }
-    return;
-}
 
 void ShopTemplate::draw(int drawX,int drawY, bool rotate)
 {
@@ -110,169 +57,6 @@ bool operator!=(const Color& a, const Color& b)
 {
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
 }   
-
-class NPC
-{
-    public:
-    char name[100];
-    bool clicked = false;
-    int x,y;
-    NPC_doing doing;
-    int amount;
-    int rad;
-    int age;
-    int workplace;
-    int workplaceX;
-    int workplaceY;
-    int shopX;
-    int shopY;
-    int homeX;
-    int homeY;
-    int speedX;
-    int speedY;
-    int startX;
-    int startY;
-    int destinationX;
-    int destinationY;
-    float waitTimer = 0.0f;
-    float targetWaitTime = 0.0f;
-    NPC_work work;
-    void NPC_movement();
-    void draw();
-    private:
-
-};
-
-void NPC::draw()
-{
-    DrawCircle(x, y, rad, RED); 
-    return;
-}
-
-void NPC::NPC_movement() {
-    if (doing == NPC_IDLE) {
-        waitTimer += GetFrameTime();
-
-        if (waitTimer >= targetWaitTime) {
-            doing = NPC_WALKING;
-            startX = x;
-            startY = y;
-            destinationX = GetRandomValue(-500, 500) + startX;
-            destinationY = GetRandomValue(-500, 500) + startY;
-
-            waitTimer = 0.0f;
-        }
-    }
-    else if (doing == NPC_WORKING) {
-        waitTimer += GetFrameTime();
-
-        if (waitTimer >= targetWaitTime) {    
-            doing = NPC_WALKING_TO_HOME;
-            startX = x;
-            startY = y;
-            waitTimer = 0.0f;
-        }
-    }
-    else if (doing == NPC_SHOPPING) {
-        waitTimer += GetFrameTime();
-
-        if (waitTimer >= targetWaitTime) {    
-            doing = NPC_WALKING_TO_HOME;
-            startX = x;
-            startY = y;
-            waitTimer = 0.0f;
-        }
-    }
-    else if (doing == NPC_HOME) {
-        waitTimer += GetFrameTime();
-
-        if (waitTimer >= targetWaitTime) {    
-            doing = NPC_WALKING_TO_SHOP;
-            startX = x;
-            startY = y;
-            waitTimer = 0.0f;
-        }
-    }
-    else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP)
-    {
-        int speed = 3; 
-
-        if (doing == NPC_WALKING_TO_WORK)
-        {
-            destinationX = workplaceX;
-            destinationY = workplaceY;
-        }
-        else if (doing == NPC_WALKING_TO_HOME)
-        {
-            destinationX = homeX;
-            destinationY = homeY;
-        }
-        else if (doing == NPC_WALKING_TO_SHOP)
-        {
-            float closestDistance = -1.0f;
-            Vector2 closestShop = {0, 0};
-            Vector2 currentPosition = {(float)x, (float)y};
-
-            for (size_t i = 0; i < activeShops.size(); i++) {
-                float dist = Vector2Distance(currentPosition, activeShops[i]);
-
-                if (closestDistance < 0 || dist < closestDistance) {
-                    closestDistance = dist;
-                    closestShop = activeShops[i];
-                }
-            }
-
-
-            destinationX = closestShop.x;
-            destinationY = closestShop.y;
-        }
-
-        if (abs(destinationX - x) <= speed) {
-            x = destinationX;
-            speedX = 0;
-        } 
-        else if (x < destinationX) {
-            x += speed;
-            speedX = speed;
-        } 
-        else if (x > destinationX) {
-            x -= speed;
-            speedX = -speed;
-        }
-
-        if (abs(destinationY - y) <= speed) {
-            y = destinationY;
-            speedY = 0;
-        } 
-        else if (y < destinationY) {
-            y += speed;
-            speedY = speed;
-        } 
-        else if (y > destinationY) {
-            y -= speed;
-            speedY = -speed;
-        }
-
-        if (x == destinationX && y == destinationY) {
-            if (doing == NPC_WALKING_TO_WORK) {
-                doing = NPC_WORKING;
-                targetWaitTime = 60;
-            } 
-            else if (doing == NPC_WALKING_TO_HOME) {
-                doing = NPC_HOME;
-                targetWaitTime = 20;
-            }
-            else if (doing == NPC_WALKING_TO_SHOP) {
-                doing = NPC_SHOPPING;
-                targetWaitTime = 30;
-            }
-            else {
-                doing = NPC_IDLE; 
-                targetWaitTime = (float)GetRandomValue(1, 8);
-            }
-        }
-    }    
-}
 
 class Object
 {
@@ -504,7 +288,7 @@ int main()
 
             if (!pause) {
                 for(int i = 0; i < alive_npc+1; i++) {
-                    npc1[i].NPC_movement();
+                    npc1[i].NPC_movement(activeShops);
                 }
             }
 
