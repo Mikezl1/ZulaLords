@@ -32,27 +32,6 @@ const Color TerrainColors[] = {
     [TERRAIN_LIMESTONE_WALL] = {217, 211, 199, 255}
 };
 
-struct ShopTemplate// nevim proc mam dvakrat temer identickou strukturu ale ok...
-{
-    std::string name;
-    int gridWidth;
-    int gridHeight;
-    int price;
-    Color color;
-    void draw(int drawX, int drawY, bool rotate);
-};
-
-void ShopTemplate::draw(int drawX,int drawY, bool rotate)
-{
-    if (rotate) {
-        DrawRectangle(drawX - gridHeight/2 * GRID_SIZE, drawY - gridHeight/2 *GRID_SIZE, gridHeight * GRID_SIZE, gridWidth * GRID_SIZE, color);
-    }
-    else {
-        DrawRectangle(drawX - gridHeight/2 * GRID_SIZE, drawY - gridHeight/2 *GRID_SIZE, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
-    }
-    return;
-}
-
 bool operator!=(const Color& a, const Color& b)
 {
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
@@ -199,18 +178,14 @@ int main()
     std::vector<BuildingTemplate> BuildingTemplate = {
         {"Basic House", 7, 5, 4, 25, GRAY,},
         {"Basic House2", 7, 9, 6, 50, BROWN,},
+        {"Basic Shop", 2, 3, 2, 5, GRAY,},
+        {"Basic Shop2", 3, 4, 6, 7, BROWN,},
     };
 
 
     BuildingTemplate[0].textura = LoadTexture("dum22.png");
     GenTextureMipmaps(&BuildingTemplate[0].textura);
     SetTextureFilter(BuildingTemplate[0].textura, TEXTURE_FILTER_TRILINEAR); 
-    
-    ShopTemplate draggedTemplateShop;
-    std::vector<ShopTemplate> ShopTemplate = {
-        {"Basic Shop", 2, 3, 5, GRAY,},
-        {"Basic Shop2", 6, 7, 7, BROWN,},
-    };
 
     NPC npc1[10000];
     int alive_npc = 0;
@@ -429,7 +404,7 @@ int main()
                 }
             }
 
-            if(houses && isdragg) {//když dům
+            if((houses || shops) && isdragg) {//když dům
                 if (IsKeyPressed(KEY_R) || rotate) {
                     if (IsKeyPressed(KEY_R) && rotate) {
                         rotate = false;
@@ -448,7 +423,6 @@ int main()
                     int HouseGridY;
 
                     if (rotate) {
-
                         HouseGridX = (snapX - draggedTemplate.gridHeight/2*GRID_SIZE + gridArea) / GRID_SIZE;
                         HouseGridY = (snapY - draggedTemplate.gridWidth/2*GRID_SIZE + gridArea) / GRID_SIZE;
                         rotatedWidth = draggedTemplate.gridHeight;
@@ -498,71 +472,6 @@ int main()
                 else if (money < draggedTemplate.price) {
                     no_money = true;
                 }
-            }
-            else {
-                no_money = false;
-            }
-
-            if(shops && isdragg) {//když shop
-
-                if (IsKeyPressed(KEY_R) || rotate) {
-                    if (IsKeyPressed(KEY_R) && rotate) {
-                        rotate = false;
-                    }
-                    else {
-                        rotate = true;
-                    }
-                }
-
-                draggedTemplateShop.draw(snapX, snapY, rotate);
-
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && money >= draggedTemplateShop.price)
-                {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
-                    int ShopGridX;
-                    int ShopGridY;
-                    int rotatedShopWidth;
-                    int rotatedShopHeight;
-
-
-                    if (rotate) {
-                        ShopGridX = (snapX - draggedTemplateShop.gridHeight/2 * GRID_SIZE + gridArea) / GRID_SIZE;
-                        ShopGridY = (snapY - draggedTemplateShop.gridWidth/2 * GRID_SIZE + gridArea) / GRID_SIZE;
-                        rotatedShopWidth = draggedTemplateShop.gridHeight;
-                        rotatedShopHeight = draggedTemplateShop.gridWidth;
-                    }
-                    else {
-                        ShopGridX = (snapX - draggedTemplateShop.gridWidth/2 * GRID_SIZE + gridArea) / GRID_SIZE;
-                        ShopGridY = (snapY - draggedTemplateShop.gridHeight/2 * GRID_SIZE + gridArea) / GRID_SIZE;
-                        rotatedShopWidth = draggedTemplateShop.gridWidth;
-                        rotatedShopHeight = draggedTemplateShop.gridHeight;
-                    }
-
-                    for (int x = 0; x < rotatedShopWidth; x++)
-                    {
-                        for (int y = 0; y < rotatedShopHeight; y++)
-                        {
-                            int targetX = ShopGridX + x;
-                            int targetY = ShopGridY + y;
-
-                            if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells) 
-                            {
-                                grid[targetX][targetY].barv = draggedTemplateShop.color; 
-                            }
-                        }
-                    }
-
-                    money -= draggedTemplateShop.price;
-
-                    float shopCenterX = snapX + draggedTemplateShop.gridWidth/2.0f * GRID_SIZE;
-                    float shopCenterY = snapY + draggedTemplateShop.gridHeight/2.0f * GRID_SIZE;
-
-                    activeShops.push_back({shopCenterX, shopCenterY});
-
-                    isdragg = 0;
-                }     
-                else if (money < draggedTemplateShop.price) {
-                    no_money = true;
-                }           
             }
             else {
                 no_money = false;
@@ -639,11 +548,15 @@ int main()
                 }
 
                 if (shops) {
-                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "SHOP 1")){
-                        draggedTemplateShop = ShopTemplate[0];
+                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "Food Shop")){
+                        draggedTemplate = BuildingTemplate[2];
                         isdragg = 1;
                     }
-                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "CANCEL")){
+                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "Goods Shop")){
+                        draggedTemplate = BuildingTemplate[3];
+                        isdragg = 1;
+                    }
+                    if (GuiButton((Rectangle){0, 4*fromtop, 100, 50}, "CANCEL")){
                         shops = false;
                         build = false;
                     }
