@@ -51,5 +51,4 @@ public:
     long unsigned int currentPathIndex = 0;
     void NPC_movement(const std::vector<Vector2>& shops, const std::vector<Vector2>& houseslocations, const std::vector<std::vector<Object>>& grid);
     void draw();
-    std::vector<Vector2> findPath(Vector2 startPos, Vector2 targetPos, const std::vector<std::vector<Object>>& grid);
 };

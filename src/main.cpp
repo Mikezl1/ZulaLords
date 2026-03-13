@@ -17,14 +17,20 @@ using namespace std;
 std::vector<Vector2> activeShops;
 std::vector<Vector2> houseslocations;
 
+void gridSetup (std::vector<std::vector<Object>>& grid) {
+    for (int x = 0; x < cells; x++) {
+        for (int y = 0; y < cells; y++) {
+            grid[x][y].barv = TerrainColors[TERRAIN_BLANK];
+            grid[x][y].x = x;
+            grid[x][y].y = y;
+            grid[x][y].drawX = (x * GRID_SIZE) - gridArea; 
+            grid[x][y].drawY = (y * GRID_SIZE) - gridArea;
 
-void Object::draw()
-{
-    if(barv != TerrainColors[TERRAIN_BLANK]) {
-        DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, barv);
+        }
     }
-    
-    return;
+    grid[1][1].barv = RED;
+    grid[1][cells-1].barv = RED;
+    grid[cells/2][cells/2].barv = RED;
 }
 
 
@@ -84,23 +90,27 @@ Vector2 GetCameraCenterWorld(Camera2D camera) {
 
 int main() 
 {
-    const Color backgoundColor = GREEN;
-    
-    int screenWidth = 1500;
-    int screenHeight = 1000;
+    const Color backgoundColor = GREEN;    
 
+    bool fullscreen = true;
+    int screenWidth;
+    int screenHeight;
 
+    if(fullscreen) {
+        InitWindow(GetScreenWidth(), GetScreenHeight(), "Vesnice");// vytvoreni okna
+        screenWidth = GetScreenWidth();
+        screenHeight = GetScreenHeight();
+    }
+    else {
+        screenWidth = 1920;
+        screenHeight = 1080;
+        InitWindow(screenWidth, screenHeight, "Vesnice");// vytvoreni okna
+    }
 
-    InitWindow(GetScreenWidth(), GetScreenHeight(), "Vesnice");// vytvoreni okna
-
-    //InitWindow(1000, 500, "Vesnice");// vytvoreni okna
-
-    screenWidth = GetScreenWidth();
-    screenHeight = GetScreenHeight();
     
 
     SetTargetFPS(60);
-  
+    
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
 
@@ -132,6 +142,7 @@ int main()
     bool shops = false;
     bool no_money = false;
     bool rotate = false;
+    
 
     int mousehold = 0;
 
@@ -139,6 +150,7 @@ int main()
 
     int rotatedWidth;
     int rotatedHeight;
+
 
     //building stuff
     std::vector<BuildingTemplate> ConstructedBuildings;
@@ -163,19 +175,7 @@ int main()
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
 
     //grid setup
-    for (int x = 0; x < cells; x++) {
-        for (int y = 0; y < cells; y++) {
-            grid[x][y].barv = TerrainColors[TERRAIN_BLANK];
-            grid[x][y].x = x;
-            grid[x][y].y = y;
-            grid[x][y].drawX = (x * GRID_SIZE) - gridArea; 
-            grid[x][y].drawY = (y * GRID_SIZE) - gridArea;
-
-        }
-    }
-    grid[1][1].barv = RED;
-    grid[1][cells-1].barv = RED;
-    grid[cells/2][cells/2].barv = RED;
+    gridSetup(grid);
 
     int StartGridX = 0;
     int StartGridY = 0;
@@ -264,12 +264,15 @@ int main()
                 DrawLine(-gridArea, y, gridArea, y, Color{ 50, 50, 80, 55 });
             }
 
+            PrintAll(grid,camera);// vykresleni všech buněk ktere jsou vidět na obrazovce
 
             for(int i = 0; i < alive_npc+1; i++) {
                 npc1[i].draw();
             }
 
-            PrintAll(grid,camera);// vykresleni všech buněk ktere jsou vidět na obrazovce
+            for (auto& budova : ConstructedBuildings) {
+                DrawRectangle(budova.drawX, budova.drawY, budova.gridWidth * GRID_SIZE, budova.gridHeight * GRID_SIZE, budova.color);
+            }
 
             //line spawn veci
             int gridX = (snapX + gridArea) / GRID_SIZE;
@@ -279,7 +282,7 @@ int main()
             {
                 StartGridX = gridX;
                 StartGridY = gridY;
-            }   
+            }
 
             if(IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !pause)
             {
@@ -319,22 +322,6 @@ int main()
                         }
                     }
                 }
-            }
-
-            // normal spawn věci
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && (paths | destroy))
-            {
-
-                int gridX = (snapX + gridArea) / GRID_SIZE;
-                int gridY = (snapY + gridArea) / GRID_SIZE;
-
-
-                //aby se nepsalo mimo bunky
-                if (gridX >= 0 && gridX < cells && gridY >= 0 && gridY < cells ) 
-                {
-                    grid[gridX][gridY].barv = TerrainColors[mousehold] ;
-                }
-              
             }
 
             for(int i = 0; i < alive_npc+1; i++) {

@@ -11,3 +11,14 @@ void BuildingTemplate::draw(int drawX,int drawY, bool rotate)
     }
     return;
 }
+
+
+
+void Object::draw()
+{
+    if(barv != TerrainColors[TERRAIN_BLANK]) {
+        DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, barv);
+    }
+    
+    return;
+}
