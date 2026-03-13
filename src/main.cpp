@@ -15,6 +15,7 @@
 using namespace std;
 
 std::vector<Vector2> activeShops;
+std::vector<Vector2> houseslocations;
 
 typedef enum {
     TERRAIN_BLANK,
@@ -263,7 +264,7 @@ int main()
 
             if (!pause) {
                 for(int i = 0; i < alive_npc+1; i++) {
-                    npc1[i].NPC_movement(activeShops);
+                    npc1[i].NPC_movement(activeShops, houseslocations);
                 }
             }
 
@@ -451,22 +452,13 @@ int main()
                     money -= draggedTemplate.price;
                     draggedTemplate.SetPosition(snapX-GRID_SIZE*(draggedTemplate.gridWidth/2),snapY-GRID_SIZE*(draggedTemplate.gridHeight/2));
                     ConstructedBuildings.emplace_back(draggedTemplate);
-                    // alive_npc++;
-                    // npc1[alive_npc] = NPC();
-                    // npc1[alive_npc].x = snapX + draggedTemplate.gridWidth/2 * GRID_SIZE;
-                    // npc1[alive_npc].y = snapY + draggedTemplate.gridHeight/2 * GRID_SIZE;
-                    // npc1[alive_npc].homeX = snapX + draggedTemplate.gridWidth/2 * GRID_SIZE;
-                    // npc1[alive_npc].homeY = snapY + draggedTemplate.gridHeight/2 * GRID_SIZE;
-                    // npc1[alive_npc].speedX = 0;
-                    // npc1[alive_npc].speedY = 0;
-                    // npc1[alive_npc].rad = 15;
-                    // npc1[alive_npc].amount = npc1->amount + 1;
-                    // npc1[alive_npc].work = NONE;
-                    // npc1[alive_npc].doing = NPC_HOME;
-                    // npc1[alive_npc].age = 20;
-                    // npc1[alive_npc].clicked = false;
-                    // sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
 
+                    if (shops) {
+                        activeShops.push_back((Vector2){(float)snapX, (float)snapY});
+                    }
+                    else if (houses) {
+                        houseslocations.push_back((Vector2){(float)snapX, (float)snapY});
+                    }
                     isdragg = 0;
                 }
                 else if (money < draggedTemplate.price) {
@@ -515,6 +507,22 @@ int main()
             if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, "DESTROY") && !build){
                 destroy = true;
                 build = true;
+            }
+            if (GuiButton((Rectangle){0, fromtop+200, 100, 50}, "Spawn NPC") && !pause){
+                alive_npc++;
+                npc1[alive_npc] = NPC();
+                npc1[alive_npc].x = 0;
+                npc1[alive_npc].y = 0;
+                npc1[alive_npc].speedX = 0;
+                npc1[alive_npc].speedY = 0;
+                npc1[alive_npc].rad = 15;
+                npc1[alive_npc].amount = npc1->amount + 1;
+                npc1[alive_npc].work = NONE;
+                npc1[alive_npc].doing = NPC_IDLE;
+                npc1[alive_npc].age = 20;
+                npc1[alive_npc].clicked = false;
+                npc1[alive_npc].hasahouse = false;
+                sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
             }
 
             if(build) {

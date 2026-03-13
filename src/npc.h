@@ -13,6 +13,7 @@ typedef enum {
 } NPC_work;
 
 extern std::vector<Vector2> activeShops;
+extern std::vector<Vector2> houseslocations;
 
 class NPC {
 public:
@@ -32,8 +33,9 @@ public:
     int destinationX, destinationY;
     float waitTimer = 0.0f;
     float targetWaitTime = 0.0f;
+    bool hasahouse = false;
     NPC_work work;
 
-    void NPC_movement(const std::vector<Vector2>& shops);
+    void NPC_movement(const std::vector<Vector2>& shops, const std::vector<Vector2>& houseslocations);
     void draw();
 };

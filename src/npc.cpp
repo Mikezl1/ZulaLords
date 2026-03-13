@@ -1,4 +1,5 @@
 #include "npc.h"
+#include "buildings.h"
 #include <cmath>
 
 
@@ -8,7 +9,28 @@ void NPC::draw()
     return;
 }
 
-void NPC::NPC_movement(const std::vector<Vector2>& shops) {
+void NPC::NPC_movement(const std::vector<Vector2>& shops, const std::vector<Vector2>& houseslocations) {
+    if (hasahouse == false) {
+        if (!houseslocations.empty()) {
+            int closestDistance = -1;
+            Vector2 closestHouse = {0, 0};
+            Vector2 currentPosition = {(float)x, (float)y};
+
+            for (size_t i = 0; i < houseslocations.size(); i++) {
+                float dist = Vector2Distance(currentPosition, houseslocations[i]);
+
+                if ((closestDistance < 0 || dist < closestDistance)) {
+                    closestDistance = dist;
+                    closestHouse = houseslocations[i];
+                }
+            }
+
+            homeX = closestHouse.x;
+            homeY = closestHouse.y;
+            hasahouse = true;
+            doing = NPC_WALKING_TO_HOME;
+        }
+    }
     if (doing == NPC_IDLE) {
         waitTimer += GetFrameTime();
 
