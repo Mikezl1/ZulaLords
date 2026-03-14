@@ -84,6 +84,7 @@ void SmartBlock(std::vector<std::vector<Object>>& grid, int x, int y)
 
     if (drawdown && drawleft && drawright && drawup)//full
     {
+        // zde musí být přidáno dalších 8 variací prozatím
         grid[x][y].drawTextures(grid[x][y].textura.full);
         return;
     }
@@ -344,8 +345,12 @@ int main()
     BuildingTemplate[0].textura = LoadTexture("dum22.png");
     GenTextureMipmaps(&BuildingTemplate[0].textura);
     SetTextureFilter(BuildingTemplate[0].textura, 0); 
+    
+
 
     TexPack BasicWall;
+    BasicWall = LoadTexPack("BasicWallFull0002.png",BLUE);
+    /* // bolest
     BasicWall.center =LoadTexture("BasicWall/BasicWall.png")  ;     
     SetTextureFilter(BasicWall.center, 0);
     BasicWall.right =LoadTexture("BasicWall/BasicWallToRight.png")  ;
@@ -391,7 +396,7 @@ int main()
     SetTextureFilter(BasicWall.corner_rightup_E, 0);
     BasicWall.corner_rightup_F =LoadTexture("BasicWall/corners/BasicWallRightupF.png")  ;
     SetTextureFilter(BasicWall.corner_rightup_F, 0);
-
+    */
     std::vector<NPC> npc1(10000);
     int alive_npc = 0;
 

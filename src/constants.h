@@ -27,21 +27,24 @@ inline bool operator==(const Color& a, const Color& b) {
     return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 }
 
-class TexPack{
+class TexPack{//24
 public:
     Color barv;
-    Texture2D center;
+
+    Texture2D center;//1
+    Texture2D horizontal;//2   
+    Texture2D vertically;  //3  
+    Texture2D full;//4
+
     Texture2D left;
     Texture2D right;
-    Texture2D horizontal;
     Texture2D up;
     Texture2D down;
-    Texture2D vertically;
-    Texture2D full;
+
     Texture2D notup;
     Texture2D notdown;
     Texture2D notleft;
-    Texture2D notright;
+    Texture2D notright; 
 
     Texture2D corner_leftup_E;//E = empty
     Texture2D corner_rightup_E;
@@ -53,6 +56,10 @@ public:
     Texture2D corner_leftdown_F;
     Texture2D corner_rightdown_F;
 
+    Texture2D full_notleftup;// full but not
+    Texture2D full_notrightup;
+    Texture2D full_notleftdown;
+    Texture2D full_notrightdown;
 };
 
 class Object {
@@ -65,3 +72,7 @@ public:
     void draw();
     void drawTextures(Texture2D whatTexture);
 };
+
+Texture2D ExtractBlock(Image atlas, int poloz, int row);
+
+TexPack LoadTexPack(const char* fileName, Color color) ;
