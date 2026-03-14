@@ -11,7 +11,6 @@
 #include "constants.h"
 #include "npc.h"
 #include "buildings.h"
-
 using namespace std;
 
 std::vector<Vector2> activeShops;
@@ -52,6 +51,182 @@ Camera2D cameraUpdate(Camera2D camera) {//kamera věci
     return camera;
 }
 
+void SmartBlock(std::vector<std::vector<Object>>& grid, int x, int y)
+{
+    bool drawleft = 0;
+    bool drawright = 0;
+    bool drawup = 0;
+    bool drawdown = 0;
+    //corners
+    bool drawleftup = 0;
+    bool drawrightup = 0;
+    bool drawleftdown = 0;
+    bool drawrightdown = 0;
+    if (grid[x][y].barv == grid[x-1][y].barv)
+    {
+        drawleft = 1;
+    }
+
+    if (grid[x][y].barv == grid[x+1][y].barv)
+    {
+        drawright = 1;
+    }
+
+    if (grid[x][y].barv == grid[x][y-1].barv)//up
+    {
+        drawup = 1;
+    }
+
+    if (grid[x][y].barv == grid[x][y+1].barv)//down
+    {
+        drawdown = 1;
+    }
+
+    if (drawdown && drawleft && drawright && drawup)//full
+    {
+        grid[x][y].drawTextures(grid[x][y].textura.full);
+        return;
+    }
+
+        if (drawdown && drawleft && drawright && !drawup)//notup
+    {
+        grid[x][y].drawTextures(grid[x][y].textura.notup);
+        return;
+    }
+
+    if (drawdown && drawleft && !drawright && drawup)//notright
+    {
+        grid[x][y].drawTextures(grid[x][y].textura.notright);
+        return;
+    }
+
+    if (drawdown && !drawleft && drawright && drawup)//notleft
+    {
+        grid[x][y].drawTextures(grid[x][y].textura.notleft);
+        return;
+    }
+
+    if (!drawdown && drawleft && drawright && drawup)//notdown
+    {
+        grid[x][y].drawTextures(grid[x][y].textura.notdown);
+        return;
+    }
+
+    //corners
+    if (grid[x][y].barv == grid[x-1][y-1].barv)
+    {
+        drawleftup = 1;
+    }
+
+    if (grid[x][y].barv == grid[x+1][y-1].barv)
+    {
+        drawrightup = 1;
+    }
+
+    if (grid[x][y].barv == grid[x-1][y+1].barv)
+    {
+        drawleftdown = 1;
+    }
+
+    if (grid[x][y].barv == grid[x+1][y+1].barv)
+    {
+        drawrightdown = 1;
+    }
+
+    if (drawdown && drawleft)
+    {
+        if (drawleftdown)
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_leftdown_F);
+        }
+        else
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_leftdown_E);
+        }
+        return;
+    }
+
+    if (drawdown && drawright)
+    {
+        if (drawrightdown)
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_rightdown_F);
+        }
+        else
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_rightdown_E);
+        }
+        return;
+    }
+
+    if (drawup && drawright)
+    {
+        if (drawrightup)
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_rightup_F);
+        }
+        else
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_rightup_E);
+        }
+        return;
+    }
+
+    if (drawup && drawleft)
+    {
+        if (drawleftup)
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_leftup_F);
+        }
+        else
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.corner_leftup_E);
+        }
+        return;
+    }
+    //end corners
+
+    if (drawright)
+    {
+        if (drawleft)
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.horizontal);
+            //draw horizontal 
+            return;
+        }
+        grid[x][y].drawTextures(grid[x][y].textura.right);
+    }
+    else if (drawleft)
+    {
+        /* code */
+        grid[x][y].drawTextures(grid[x][y].textura.left);
+    }
+    else if (drawup)
+    {
+        /* code */
+        grid[x][y].drawTextures(grid[x][y].textura.up);
+        if (drawdown)
+        {
+            grid[x][y].drawTextures(grid[x][y].textura.vertically);
+            //draw horizontal 
+            return;
+        }
+    }
+    else if (drawdown)
+    {
+        /* code */
+        grid[x][y].drawTextures(grid[x][y].textura.down);
+    }
+    else
+    {
+        //draw alone
+        grid[x][y].drawTextures(grid[x][y].textura.center);
+    }
+    
+
+   return;
+}
+
 void PrintAll(std::vector<std::vector<Object>>& grid, Camera2D camera)
 {
     // vykresleni všech buněk ktere jsou vidět na obrazovce
@@ -78,6 +253,7 @@ void PrintAll(std::vector<std::vector<Object>>& grid, Camera2D camera)
     for (int i = TL_drw.x; i < BR_drw.x; i++) {
         for (int j = TL_drw.y; j < BR_drw.y; j++) {
             grid[i][j].draw();
+            SmartBlock(grid, i, j);
         }
     }    
     return;
@@ -167,9 +343,56 @@ int main()
 
     BuildingTemplate[0].textura = LoadTexture("dum22.png");
     GenTextureMipmaps(&BuildingTemplate[0].textura);
-    SetTextureFilter(BuildingTemplate[0].textura, TEXTURE_FILTER_TRILINEAR); 
+    SetTextureFilter(BuildingTemplate[0].textura, 0); 
 
-    NPC npc1[10000];
+    TexPack BasicWall;
+    BasicWall.center =LoadTexture("BasicWall/BasicWall.png")  ;     
+    SetTextureFilter(BasicWall.center, 0);
+    BasicWall.right =LoadTexture("BasicWall/BasicWallToRight.png")  ;
+    SetTextureFilter(BasicWall.right, 0);
+    BasicWall.left =LoadTexture("BasicWall/BasicWallToLeft.png")  ;
+    SetTextureFilter(BasicWall.left, 0);
+    BasicWall.horizontal =LoadTexture("BasicWall/BasicWalltoHorizontal.png")  ;
+    SetTextureFilter(BasicWall.horizontal, 0);
+    BasicWall.up =LoadTexture("BasicWall/BasicWalltoUp.png")  ;
+    SetTextureFilter(BasicWall.up, 0);
+    BasicWall.down =LoadTexture("BasicWall/BasicWalltoDown.png")  ;
+    SetTextureFilter(BasicWall.down, 0);
+    BasicWall.vertically =LoadTexture("BasicWall/BasicWalltoVertical.png")  ;
+    SetTextureFilter(BasicWall.vertically, 0);
+    BasicWall.full =LoadTexture("BasicWall/BasicWalltoFull.png")  ;
+    SetTextureFilter(BasicWall.full, 0);
+
+    BasicWall.notdown =LoadTexture("BasicWall/BasicWallnotDown.png")  ;
+    SetTextureFilter(BasicWall.notdown, 0);
+    BasicWall.notup =LoadTexture("BasicWall/BasicWallnotUp.png")  ;
+    SetTextureFilter(BasicWall.notup, 0);
+    BasicWall.notleft =LoadTexture("BasicWall/BasicWallnotLeft.png")  ;
+    SetTextureFilter(BasicWall.notleft, 0);
+    BasicWall.notright =LoadTexture("BasicWall/BasicWallnotRight.png")  ;
+    SetTextureFilter(BasicWall.notright, 0);
+
+    BasicWall.corner_rightdown_E =LoadTexture("BasicWall/corners/BasicWallRightdownE.png")  ;//corners
+    SetTextureFilter(BasicWall.corner_rightdown_E, 0);
+    BasicWall.corner_rightdown_F =LoadTexture("BasicWall/corners/BasicWallRightdownF.png")  ;
+    SetTextureFilter(BasicWall.corner_rightdown_F, 0);
+
+    BasicWall.corner_leftdown_E =LoadTexture("BasicWall/corners/BasicWallLeftdownE.png")  ;
+    SetTextureFilter(BasicWall.corner_leftdown_E, 0);
+    BasicWall.corner_leftdown_F =LoadTexture("BasicWall/corners/BasicWallLeftdownF.png")  ;
+    SetTextureFilter(BasicWall.corner_leftdown_F, 0);
+    
+    BasicWall.corner_leftup_E =LoadTexture("BasicWall/corners/BasicWallUpLeftE.png")  ;
+    SetTextureFilter(BasicWall.corner_leftup_E, 0);
+    BasicWall.corner_leftup_F =LoadTexture("BasicWall/corners/BasicWallLeftupF.png")  ;
+    SetTextureFilter(BasicWall.corner_leftup_F, 0);
+
+    BasicWall.corner_rightup_E =LoadTexture("BasicWall/corners/BasicWalltoUpRightE.png")  ;
+    SetTextureFilter(BasicWall.corner_rightup_E, 0);
+    BasicWall.corner_rightup_F =LoadTexture("BasicWall/corners/BasicWallRightupF.png")  ;
+    SetTextureFilter(BasicWall.corner_rightup_F, 0);
+
+    std::vector<NPC> npc1(10000);
     int alive_npc = 0;
 
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
@@ -319,6 +542,13 @@ int main()
                         if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
                         {
                             grid[i][ii].barv = TerrainColors[mousehold] ;
+                            grid[i][ii].haveTexture = false;
+                            if(mousehold == TERRAIN_STONE_PATH)
+                            {
+                                grid[i][ii].haveTexture = true;
+                                grid[i][ii].textura = BasicWall;                                
+                            }
+
                         }
                     }
                 }
@@ -473,13 +703,13 @@ int main()
                 npc1[alive_npc].speedX = 0;
                 npc1[alive_npc].speedY = 0;
                 npc1[alive_npc].rad = 15;
-                npc1[alive_npc].amount = npc1->amount + 1;
+                npc1[alive_npc].amount = npc1[alive_npc].amount + 1;
                 npc1[alive_npc].work = NONE;
                 npc1[alive_npc].doing = NPC_IDLE;
                 npc1[alive_npc].age = 20;
                 npc1[alive_npc].clicked = false;
                 npc1[alive_npc].hasahouse = false;
-                sprintf(npc1[alive_npc].name, "NPC %d", npc1->amount++);
+                sprintf(npc1[alive_npc].name, "NPC %d", npc1[alive_npc].amount++);
             }
 
             if(build) {

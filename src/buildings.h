@@ -22,6 +22,6 @@ struct BuildingTemplate
     int drawX , drawY;
     void drawTexture()
     {
-        DrawTexture(textura, drawX,drawY, color);
+        DrawTexture(textura, drawX,drawY, WHITE);
     }
 };

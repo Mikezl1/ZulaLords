@@ -22,3 +22,12 @@ void Object::draw()
     
     return;
 }
+
+void Object::drawTextures(Texture2D whatTexture)
+{
+    if (haveTexture)
+    {
+        DrawTexture(whatTexture, drawX,drawY, WHITE);    
+    }
+    return;
+}
