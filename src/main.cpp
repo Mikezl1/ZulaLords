@@ -168,8 +168,14 @@ void PrintAll(std::vector<std::vector<Object>>& grid, Camera2D camera)
 
     for (int i = TL_drw.x; i < BR_drw.x; i++) {
         for (int j = TL_drw.y; j < BR_drw.y; j++) {
-            grid[i][j].draw();
-            SmartBlock(grid, i, j);
+            if (grid[i][j].haveTexture)
+            {
+                SmartBlock(grid, i, j);
+            }
+            else
+            {
+                grid[i][j].draw();
+            }
         }
     }    
     return;
@@ -232,6 +238,7 @@ int main()
     bool houses = false;
     bool destroy = false;
     bool shops = false;
+    bool walls = false;
     bool no_money = false;
     bool rotate = false;
     
@@ -263,8 +270,10 @@ int main()
     
 
 
-    TexPack BasicWall;
-    BasicWall = LoadTexPack("BasicWallmodel22.png",BLUE);
+    TexPack StoneWall;
+    StoneWall = LoadTexPack("BasicWallmodel22.png",BLUE);
+    TexPack WoodenWall;
+    WoodenWall = LoadTexPack("WoodenWall.png",BLUE);
     /* // bolest
     BasicWall.center =LoadTexture("BasicWall/BasicWall.png")  ;     
     SetTextureFilter(BasicWall.center, 0);
@@ -448,7 +457,7 @@ int main()
                 }    
             }
 
-            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
+            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy | walls) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
             {
                 int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
                 int EndX = (gridX > StartGridX) ? gridX : StartGridX;
@@ -463,10 +472,27 @@ int main()
                         {
                             grid[i][ii].barv = TerrainColors[mousehold] ;
                             grid[i][ii].haveTexture = false;
-                            if(mousehold == TERRAIN_STONE_PATH)
+
+                            if(walls)
                             {
                                 grid[i][ii].haveTexture = true;
-                                grid[i][ii].textura = BasicWall;                                
+
+                                if (mousehold == 0)
+                                {
+                                    grid[i][ii].textura = TexPack(); 
+                                    grid[i][ii].haveTexture = false;
+                                }
+
+                                if (mousehold == Wall_Stone)
+                                {
+                                    grid[i][ii].textura = StoneWall; 
+                                }
+                                if (mousehold == Wall_Wooden)
+                                {
+                                    grid[i][ii].textura = WoodenWall; 
+                                }
+                                //grid[i][ii].textura = StoneWall; 
+
                             }
 
                         }
@@ -610,12 +636,16 @@ int main()
                 build = true;
                 shops = true;
             }
+            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, "WALLS  ") && !build){
+                build = true;
+                walls = true;
+            }
 
-            if (GuiButton((Rectangle){0, fromtop+150, 100, 50}, "DESTROY") && !build){
+            if (GuiButton((Rectangle){0, fromtop+200, 100, 50}, "DESTROY") && !build){
                 destroy = true;
                 build = true;
             }
-            if (GuiButton((Rectangle){0, fromtop+200, 100, 50}, "Spawn NPC") && !pause){
+            if (GuiButton((Rectangle){0, fromtop+250, 100, 50}, "Spawn NPC") && !pause){
                 alive_npc++;
                 npc1[alive_npc] = NPC();
                 npc1[alive_npc].x = 0;
@@ -677,6 +707,21 @@ int main()
                     }
                 }
 
+                if (walls) {
+                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "Stone wall")){
+                        mousehold = Wall_Stone;
+                        isdragg = 1;
+                    }
+                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "Wooden wall")){
+                        mousehold = Wall_Wooden;
+                        isdragg = 1;
+                    }
+                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CANCEL")){
+                        walls = false;
+                        build = false;
+                    }
+                }
+
                 if(destroy) {
                     mousehold = TERRAIN_BLANK;
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "CANCEL")){
@@ -693,6 +738,7 @@ int main()
                     shops = false;
                     destroy = false;
                     build = false;
+                    walls = false;
                 }
             }
             

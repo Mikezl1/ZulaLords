@@ -9,7 +9,7 @@ typedef enum {
     TERRAIN_DIRT_PATH,
     TERRAIN_STONE_PATH,
     TERRAIN_LIMESTONE_WALL,
-    TERRAIN_COUNT
+    TERRAIN_COUNT,
 } TerrainType;
 
 const Color TerrainColors[] = {
@@ -18,6 +18,14 @@ const Color TerrainColors[] = {
     [TERRAIN_STONE_PATH]  = {136,140,141, 255}, 
     [TERRAIN_LIMESTONE_WALL] = {217, 211, 199, 255}
 };
+
+typedef enum {
+    Wall_BLANK,
+    Wall_Stone = 101,
+    Wall_Wooden,
+    Wall_COUNT,
+} WallType;
+
 
 inline bool operator!=(const Color& a, const Color& b) {
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
@@ -48,6 +56,7 @@ public:
 class Object {
 public:
     Color barv;
+    int what_am_I;
     bool haveTexture;
     TexPack textura;
     int x, y;
