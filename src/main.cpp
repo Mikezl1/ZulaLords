@@ -51,181 +51,96 @@ Camera2D cameraUpdate(Camera2D camera) {//kamera věci
     return camera;
 }
 
-void SmartBlock(std::vector<std::vector<Object>>& grid, int x, int y)
-{
-    bool drawleft = 0;
-    bool drawright = 0;
-    bool drawup = 0;
-    bool drawdown = 0;
-    //corners
-    bool drawleftup = 0;
-    bool drawrightup = 0;
-    bool drawleftdown = 0;
-    bool drawrightdown = 0;
-    if (grid[x][y].barv == grid[x-1][y].barv)
-    {
-        drawleft = 1;
-    }
+void SmartBlock(std::vector<std::vector<Object>>& grid, int x, int y) {
+    auto isSame = [&](int cx, int cy) {
+        if (cx < 0 || cx >= grid.size() || cy < 0 || cy >= grid[0].size()) return true; 
+        return grid[cx][cy].barv == grid[x][y].barv;
+    };
 
-    if (grid[x][y].barv == grid[x+1][y].barv)
-    {
-        drawright = 1;
-    }
+    bool U = isSame(x, y - 1);
+    bool D = isSame(x, y + 1);
+    bool L = isSame(x - 1, y);
+    bool R = isSame(x + 1, y);
 
-    if (grid[x][y].barv == grid[x][y-1].barv)//up
-    {
-        drawup = 1;
-    }
+    bool UL = U && L && isSame(x - 1, y - 1);
+    bool UR = U && R && isSame(x + 1, y - 1);
+    bool DL = D && L && isSame(x - 1, y + 1);
+    bool DR = D && R && isSame(x + 1, y + 1);
 
-    if (grid[x][y].barv == grid[x][y+1].barv)//down
-    {
-        drawdown = 1;
-    }
+    auto& tex = grid[x][y].textura;
+    int sum = U + D + L + R;
 
-    if (drawdown && drawleft && drawright && drawup)//full
-    {
-        // zde musí být přidáno dalších 8 variací prozatím
-        grid[x][y].drawTextures(grid[x][y].textura.full);
-        return;
-    }
-
-        if (drawdown && drawleft && drawright && !drawup)//notup
-    {
-        grid[x][y].drawTextures(grid[x][y].textura.notup);
-        return;
-    }
-
-    if (drawdown && drawleft && !drawright && drawup)//notright
-    {
-        grid[x][y].drawTextures(grid[x][y].textura.notright);
-        return;
-    }
-
-    if (drawdown && !drawleft && drawright && drawup)//notleft
-    {
-        grid[x][y].drawTextures(grid[x][y].textura.notleft);
-        return;
-    }
-
-    if (!drawdown && drawleft && drawright && drawup)//notdown
-    {
-        grid[x][y].drawTextures(grid[x][y].textura.notdown);
-        return;
-    }
-
-    //corners
-    if (grid[x][y].barv == grid[x-1][y-1].barv)
-    {
-        drawleftup = 1;
-    }
-
-    if (grid[x][y].barv == grid[x+1][y-1].barv)
-    {
-        drawrightup = 1;
-    }
-
-    if (grid[x][y].barv == grid[x-1][y+1].barv)
-    {
-        drawleftdown = 1;
-    }
-
-    if (grid[x][y].barv == grid[x+1][y+1].barv)
-    {
-        drawrightdown = 1;
-    }
-
-    if (drawdown && drawleft)
-    {
-        if (drawleftdown)
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_leftdown_F);
+    if (sum == 4) {
+        int diagSum = UL + UR + DL + DR;
+        
+        if (diagSum == 4) grid[x][y].drawTextures(tex.full);
+        else if (diagSum == 3) {
+            if (!UL) grid[x][y].drawTextures(tex.full_notleftup);
+            else if (!UR) grid[x][y].drawTextures(tex.full_notrightup);
+            else if (!DL) grid[x][y].drawTextures(tex.full_notleftdown);
+            else if (!DR) grid[x][y].drawTextures(tex.full_notrightdown);
         }
-        else
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_leftdown_E);
+        else if (diagSum == 2) {
+            if (!UL && !UR) grid[x][y].drawTextures(tex.full_not_top_corners);
+            else if (!DL && !DR) grid[x][y].drawTextures(tex.full_not_bottom_corners);
+            else if (!UL && !DL) grid[x][y].drawTextures(tex.full_not_left_corners);
+            else if (!UR && !DR) grid[x][y].drawTextures(tex.full_not_right_corners);
+            else if (!UL && !DR) grid[x][y].drawTextures(tex.full_not_diag_1);
+            else if (!UR && !DL) grid[x][y].drawTextures(tex.full_not_diag_2);
         }
-        return;
-    }
-
-    if (drawdown && drawright)
-    {
-        if (drawrightdown)
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_rightdown_F);
+        else if (diagSum == 1) {
+            if (UL) grid[x][y].drawTextures(tex.full_only_leftup);
+            else if (UR) grid[x][y].drawTextures(tex.full_only_rightup);
+            else if (DL) grid[x][y].drawTextures(tex.full_only_leftdown);
+            else if (DR) grid[x][y].drawTextures(tex.full_only_rightdown);
         }
-        else
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_rightdown_E);
-        }
-        return;
-    }
-
-    if (drawup && drawright)
-    {
-        if (drawrightup)
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_rightup_F);
-        }
-        else
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_rightup_E);
-        }
-        return;
-    }
-
-    if (drawup && drawleft)
-    {
-        if (drawleftup)
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_leftup_F);
-        }
-        else
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.corner_leftup_E);
-        }
-        return;
-    }
-    //end corners
-
-    if (drawright)
-    {
-        if (drawleft)
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.horizontal);
-            //draw horizontal 
-            return;
-        }
-        grid[x][y].drawTextures(grid[x][y].textura.right);
-    }
-    else if (drawleft)
-    {
-        /* code */
-        grid[x][y].drawTextures(grid[x][y].textura.left);
-    }
-    else if (drawup)
-    {
-        /* code */
-        grid[x][y].drawTextures(grid[x][y].textura.up);
-        if (drawdown)
-        {
-            grid[x][y].drawTextures(grid[x][y].textura.vertically);
-            //draw horizontal 
-            return;
+        else { 
+            grid[x][y].drawTextures(tex.full_not_all_corners);
         }
     }
-    else if (drawdown)
-    {
-        /* code */
-        grid[x][y].drawTextures(grid[x][y].textura.down);
+    else if (sum == 3) {
+        if (!U) { 
+            if (DL && DR) grid[x][y].drawTextures(tex.notup);
+            else if (!DL && DR) grid[x][y].drawTextures(tex.notup_notleftdown);
+            else if (DL && !DR) grid[x][y].drawTextures(tex.notup_notrightdown);
+            else grid[x][y].drawTextures(tex.notup_notboth);
+        }
+        else if (!D) { 
+            if (UL && UR) grid[x][y].drawTextures(tex.notdown);
+            else if (!UL && UR) grid[x][y].drawTextures(tex.notdown_notleftup);
+            else if (UL && !UR) grid[x][y].drawTextures(tex.notdown_notrightup);
+            else grid[x][y].drawTextures(tex.notdown_notboth);
+        }
+        else if (!L) { 
+            if (UR && DR) grid[x][y].drawTextures(tex.notleft);
+            else if (!UR && DR) grid[x][y].drawTextures(tex.notleft_notrightup);
+            else if (UR && !DR) grid[x][y].drawTextures(tex.notleft_notrightdown);
+            else grid[x][y].drawTextures(tex.notleft_notboth);
+        }
+        else if (!R) { 
+            if (UL && DL) grid[x][y].drawTextures(tex.notright);
+            else if (!UL && DL) grid[x][y].drawTextures(tex.notright_notleftup);
+            else if (UL && !DL) grid[x][y].drawTextures(tex.notright_notleftdown);
+            else grid[x][y].drawTextures(tex.notright_notboth);
+        }
     }
-    else
-    {
-        //draw alone
-        grid[x][y].drawTextures(grid[x][y].textura.center);
+    else if (sum == 2) {
+        if (U && D) grid[x][y].drawTextures(tex.vertically);
+        else if (L && R) grid[x][y].drawTextures(tex.horizontal);
+        else if (D && R) grid[x][y].drawTextures(DR ? tex.corner_leftup_F : tex.corner_leftup_E);
+        else if (D && L) grid[x][y].drawTextures(DL ? tex.corner_rightup_F : tex.corner_rightup_E);
+        else if (U && R) grid[x][y].drawTextures(UR ? tex.corner_leftdown_F : tex.corner_leftdown_E);
+        else if (U && L) grid[x][y].drawTextures(UL ? tex.corner_rightdown_F : tex.corner_rightdown_E);
     }
-    
-
-   return;
+    else if (sum == 1) {
+        if (R) grid[x][y].drawTextures(tex.left);     
+        else if (L) grid[x][y].drawTextures(tex.right);
+        else if (D) grid[x][y].drawTextures(tex.up);   
+        else if (U) grid[x][y].drawTextures(tex.down);  
+    }
+    else { 
+        grid[x][y].drawTextures(tex.center);
+    }
 }
 
 void PrintAll(std::vector<std::vector<Object>>& grid, Camera2D camera)
@@ -349,7 +264,7 @@ int main()
 
 
     TexPack BasicWall;
-    BasicWall = LoadTexPack("BasicWallFull0002.png",BLUE);
+    BasicWall = LoadTexPack("BasicWallmodel22.png",BLUE);
     /* // bolest
     BasicWall.center =LoadTexture("BasicWall/BasicWall.png")  ;     
     SetTextureFilter(BasicWall.center, 0);

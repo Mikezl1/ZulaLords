@@ -30,36 +30,19 @@ inline bool operator==(const Color& a, const Color& b) {
 class TexPack{//24
 public:
     Color barv;
+    Texture2D center; Texture2D horizontal; Texture2D vertically; Texture2D full;
+    Texture2D left; Texture2D right; Texture2D up; Texture2D down;
+    Texture2D notup; Texture2D notdown; Texture2D notleft; Texture2D notright;
+    Texture2D corner_leftup_E; Texture2D corner_rightup_E; Texture2D corner_leftdown_E; Texture2D corner_rightdown_E;
+    Texture2D corner_leftup_F; Texture2D corner_rightup_F; Texture2D corner_leftdown_F; Texture2D corner_rightdown_F;
+    Texture2D full_notleftup; Texture2D full_notrightup; Texture2D full_notleftdown; Texture2D full_notrightdown;
+    Texture2D full_not_top_corners; Texture2D full_not_bottom_corners; Texture2D full_not_left_corners; Texture2D full_not_right_corners;
+    Texture2D full_not_diag_1; Texture2D full_not_diag_2; Texture2D full_not_all_corners; Texture2D completely_empty;
+    Texture2D full_only_leftup; Texture2D full_only_rightup; Texture2D full_only_leftdown; Texture2D full_only_rightdown;
+    Texture2D notup_notleftdown; Texture2D notup_notrightdown; Texture2D notdown_notleftup; Texture2D notdown_notrightup;
+    Texture2D notleft_notrightup; Texture2D notleft_notrightdown; Texture2D notright_notleftup; Texture2D notright_notleftdown;
+    Texture2D notup_notboth; Texture2D notdown_notboth; Texture2D notleft_notboth; Texture2D notright_notboth;
 
-    Texture2D center;//1
-    Texture2D horizontal;//2   
-    Texture2D vertically;  //3  
-    Texture2D full;//4
-
-    Texture2D left;
-    Texture2D right;
-    Texture2D up;
-    Texture2D down;
-
-    Texture2D notup;
-    Texture2D notdown;
-    Texture2D notleft;
-    Texture2D notright; 
-
-    Texture2D corner_leftup_E;//E = empty
-    Texture2D corner_rightup_E;
-    Texture2D corner_leftdown_E;
-    Texture2D corner_rightdown_E;
-
-    Texture2D corner_leftup_F;//F full
-    Texture2D corner_rightup_F;
-    Texture2D corner_leftdown_F;
-    Texture2D corner_rightdown_F;
-
-    Texture2D full_notleftup;// full but not
-    Texture2D full_notrightup;
-    Texture2D full_notleftdown;
-    Texture2D full_notrightdown;
 };
 
 class Object {
@@ -73,6 +56,5 @@ public:
     void drawTextures(Texture2D whatTexture);
 };
 
-Texture2D ExtractBlock(Image atlas, int poloz, int row);
 
 TexPack LoadTexPack(const char* fileName, Color color) ;
