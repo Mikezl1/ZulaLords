@@ -17,7 +17,7 @@ struct ZoneTemplate
     int capacity;
     int price;
     Color color;
-    void draw();
+    void draw( Camera2D camera);
 
     std::vector<point> ownedCells;//jaký jsou bunky v zone
 };

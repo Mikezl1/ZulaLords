@@ -240,15 +240,14 @@ int main()
     bool shops = false;
     bool walls = false;
     bool no_money = false;
-    bool rotate = false;
+    bool showZones = false;
     
 
     int mousehold = 0;
 
     int money = 100;
 
-    int rotatedWidth;
-    int rotatedHeight;
+
 
 
     //building stuff
@@ -541,55 +540,12 @@ int main()
                     DrawText(age, npc1[i].x + 325, npc1[i].y - 85, 20, WHITE);
                 }
             }
-
-
-
-            if (0 && zones && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
-            {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
-                                int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
-                int EndX = (gridX > StartGridX) ? gridX : StartGridX;
-                int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
-                int EndY = (gridY > StartGridY) ? gridY : StartGridY;
-                    
-                for (int i = StartX; i <= EndX; i++)
-                {
-                    for (int ii = StartY; ii <= EndY; ii++)
-                    {
-                        if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
-                        {
-                            grid[i][ii].barv = TerrainColors[mousehold] ;
-                            grid[i][ii].haveTexture = false;
-
-                            if(walls)
-                            {
-                                grid[i][ii].haveTexture = true;
-
-                                if (mousehold == 0)
-                                {
-                                    grid[i][ii].textura = TexPack(); 
-                                    grid[i][ii].haveTexture = false;
-                                }
-
-                                if (mousehold == Wall_Stone)
-                                {
-                                    grid[i][ii].textura = StoneWall; 
-                                }
-                                if (mousehold == Wall_Wooden)
-                                {
-                                    grid[i][ii].textura = WoodenWall; 
-                                }
-                                //grid[i][ii].textura = StoneWall; 
-
-                            }
-
-                        }
-                    }
-                }
-
-            }
-
-            for (auto& zone : LiveZone) {/// vykresluje svetle modou na zony
-                zone.draw(); 
+            
+            if (showZones)
+            {
+                for (auto& zone : LiveZone) {/// vykresluje svetle modou na zony
+                    zone.draw( camera); 
+                }                
             }
 
             EndMode2D();
@@ -645,6 +601,10 @@ int main()
                 npc1[alive_npc].clicked = false;
                 npc1[alive_npc].hasahouse = false;
                 sprintf(npc1[alive_npc].name, "NPC %d", npc1[alive_npc].amount++);
+            }
+
+            if (GuiButton((Rectangle){(float)(screenWidth - 150), 0, 100.0f, 50.0f}, "Show zones") && !pause){
+                showZones = !showZones;
             }
 
             if(build) {
