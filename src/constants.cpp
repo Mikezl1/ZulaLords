@@ -45,7 +45,8 @@ TexPack LoadTexPack(const char* fileName, Color col)
     
     //250x50 px
     Image atlas = LoadImage(fileName);
-
+    ImageResizeNN(&atlas, 250, 50);
+    
     p.center     = ComposeTile(atlas, 0, 0, 0, 0);
     p.horizontal = ComposeTile(atlas, 2, 2, 2, 2);
     p.vertically = ComposeTile(atlas, 3, 3, 3, 3);

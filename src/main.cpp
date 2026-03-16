@@ -260,7 +260,7 @@ int main()
     TexPack StoneWall;
     StoneWall = LoadTexPack("BasicWallmodel22.png",BLUE);
     TexPack WoodenWall;
-    WoodenWall = LoadTexPack("WoodenWall.png",BLUE);
+    WoodenWall = LoadTexPack("better wooden wall.png",BLUE);
     /* // bolest
     BasicWall.center =LoadTexture("BasicWall/BasicWall.png")  ;     
     SetTextureFilter(BasicWall.center, 0);
