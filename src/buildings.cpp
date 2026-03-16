@@ -1,17 +1,24 @@
 #include "buildings.h"
 
 
-void BuildingTemplate::draw(int drawX,int drawY, bool rotate)
+void ZoneTemplate::draw()
 {
-    if (rotate) {
-        DrawRectangle(drawX - gridHeight/2 *GRID_SIZE, drawY - gridWidth/2 * GRID_SIZE, gridHeight * GRID_SIZE, gridWidth * GRID_SIZE, color);
-    }
-    else {
-        DrawRectangle(drawX - gridWidth/2 * GRID_SIZE, drawY - gridHeight/2 *GRID_SIZE, gridWidth * GRID_SIZE, gridHeight * GRID_SIZE, color);
+    for (auto& point : ownedCells) {
+        int DrawX = (point.x * GRID_SIZE) - gridArea;
+        int DrawY = (point.y * GRID_SIZE) - gridArea;
+        if (who_am_I == 1)
+        {
+            DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
+        }
+        else
+        {
+            DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
+        }
+        
+                
     }
     return;
 }
-
 
 
 void Object::draw()

@@ -57,6 +57,8 @@ class Object {
 public:
     Color barv;
     int what_am_I;
+    bool am_I_zone;///jsem zona?????
+    int myzone;// index of what zone it belongs
     bool haveTexture;
     TexPack textura;
     int x, y;

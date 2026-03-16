@@ -4,24 +4,20 @@
 #include <raylib.h>
 #include "constants.h"
 
-struct BuildingTemplate
+struct point
+{
+    int x;
+    int y;
+};
+
+struct ZoneTemplate
 {
     std::string name;
-    int gridWidth;
-    int gridHeight;
+    int who_am_I ; 
     int capacity;
     int price;
     Color color;
-    Texture2D textura;
-    void draw(int drawX, int drawY, bool rotate);
-    void SetPosition(int x, int y)
-    {
-        drawX = x; drawY = y;
-        return;
-    }
-    int drawX , drawY;
-    void drawTexture()
-    {
-        DrawTexture(textura, drawX,drawY, WHITE);
-    }
+    void draw();
+
+    std::vector<point> ownedCells;//jaký jsou bunky v zone
 };

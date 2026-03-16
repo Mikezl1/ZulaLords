@@ -235,7 +235,7 @@ int main()
     bool settings = false;
     bool build = false;
     bool paths = false;
-    bool houses = false;
+    bool zones = false;
     bool destroy = false;
     bool shops = false;
     bool walls = false;
@@ -252,22 +252,10 @@ int main()
 
 
     //building stuff
-    std::vector<BuildingTemplate> ConstructedBuildings;
-    ConstructedBuildings.reserve(100);
+    std::vector<ZoneTemplate> LiveZone;
+    LiveZone.reserve(100);
     bool isdragg = 0;
-    BuildingTemplate draggedTemplate;
-    std::vector<BuildingTemplate> BuildingTemplate = {
-        {"Basic House", 7, 5, 4, 25, GRAY,},
-        {"Basic House2", 7, 9, 6, 50, BROWN,},
-        {"Basic Shop", 2, 3, 2, 5, GRAY,},
-        {"Basic Shop2", 3, 4, 6, 7, BROWN,},
-    };
-
-
-    BuildingTemplate[0].textura = LoadTexture("dum22.png");
-    GenTextureMipmaps(&BuildingTemplate[0].textura);
-    SetTextureFilter(BuildingTemplate[0].textura, 0); 
-    
+    int draggedZone;
 
 
     TexPack StoneWall;
@@ -422,10 +410,6 @@ int main()
                 npc1[i].draw();
             }
 
-            for (auto& budova : ConstructedBuildings) {
-                DrawRectangle(budova.drawX, budova.drawY, budova.gridWidth * GRID_SIZE, budova.gridHeight * GRID_SIZE, budova.color);
-            }
-
             //line spawn veci
             int gridX = (snapX + gridArea) / GRID_SIZE;
             int gridY = (snapY + gridArea) / GRID_SIZE;
@@ -457,26 +441,46 @@ int main()
                 }    
             }
 
-            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy | walls) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
+            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy | walls | zones) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
             {
                 int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
                 int EndX = (gridX > StartGridX) ? gridX : StartGridX;
                 int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
                 int EndY = (gridY > StartGridY) ? gridY : StartGridY;
-                    
+
+                ZoneTemplate newZone;
+                int currentZoneIndex = 0;
+                if (zones)
+                {
+                    newZone.who_am_I = draggedZone;
+                    LiveZone.emplace_back(newZone);
+                    currentZoneIndex = LiveZone.size() - 1;
+                }
+
                 for (int i = StartX; i <= EndX; i++)
                 {
                     for (int ii = StartY; ii <= EndY; ii++)
                     {
                         if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
                         {
-                            grid[i][ii].barv = TerrainColors[mousehold] ;
-                            grid[i][ii].haveTexture = false;
+                            if (paths)
+                            {
+                                grid[i][ii].barv = TerrainColors[mousehold] ;
+                                grid[i][ii].haveTexture = false;                            
+                            }
+                            
+                            if (zones)
+                            {
+                                grid[i][ii].am_I_zone = true ;
+                                grid[i][ii].myzone = currentZoneIndex;
+                                LiveZone[currentZoneIndex].ownedCells.push_back({i, ii});
+                            }
+                            
 
                             if(walls)
                             {
                                 grid[i][ii].haveTexture = true;
-
+                                grid[i][ii].barv = TerrainColors[mousehold] ;
                                 if (mousehold == 0)
                                 {
                                     grid[i][ii].textura = TexPack(); 
@@ -538,73 +542,54 @@ int main()
                 }
             }
 
-            if((houses || shops) && isdragg) {//když dům
-                if (IsKeyPressed(KEY_R) || rotate) {
-                    if (IsKeyPressed(KEY_R) && rotate) {
-                        rotate = false;
-                    }
-                    else {
-                        rotate = true;
-                    }
-                }
 
-                draggedTemplate.draw(snapX,snapY, rotate);
-                DrawTexture(draggedTemplate.textura,snapX-GRID_SIZE*3,snapY-GRID_SIZE*2,draggedTemplate.color);
 
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause && money >= draggedTemplate.price)
-                {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
-                    int HouseGridX;
-                    int HouseGridY;
-
-                    if (rotate) {
-                        HouseGridX = (snapX - draggedTemplate.gridHeight/2*GRID_SIZE + gridArea) / GRID_SIZE;
-                        HouseGridY = (snapY - draggedTemplate.gridWidth/2*GRID_SIZE + gridArea) / GRID_SIZE;
-                        rotatedWidth = draggedTemplate.gridHeight;
-                        rotatedHeight = draggedTemplate.gridWidth;
-                    }
-                    else {
-                        HouseGridX = (snapX - draggedTemplate.gridWidth/2*GRID_SIZE + gridArea) / GRID_SIZE;
-                        HouseGridY = (snapY - draggedTemplate.gridHeight/2*GRID_SIZE + gridArea) / GRID_SIZE;
-                        rotatedWidth = draggedTemplate.gridWidth;
-                        rotatedHeight = draggedTemplate.gridHeight;
-                    }
+            if (0 && zones && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !pause)
+            {// tohle se musi vymyslet nejak jinak ale pro představu je to zatim takhle
+                                int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
+                int EndX = (gridX > StartGridX) ? gridX : StartGridX;
+                int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
+                int EndY = (gridY > StartGridY) ? gridY : StartGridY;
                     
-                    for (int x = 0; x < rotatedWidth; x++)
+                for (int i = StartX; i <= EndX; i++)
+                {
+                    for (int ii = StartY; ii <= EndY; ii++)
                     {
-                        for (int y = 0; y < rotatedHeight; y++)
+                        if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
                         {
-                            int targetX = HouseGridX + x;
-                            int targetY = HouseGridY + y;
+                            grid[i][ii].barv = TerrainColors[mousehold] ;
+                            grid[i][ii].haveTexture = false;
 
-                            if (targetX >= 0 && targetX < cells && targetY >= 0 && targetY < cells)
+                            if(walls)
                             {
-                                grid[targetX][targetY].barv = draggedTemplate.color;
+                                grid[i][ii].haveTexture = true;
+
+                                if (mousehold == 0)
+                                {
+                                    grid[i][ii].textura = TexPack(); 
+                                    grid[i][ii].haveTexture = false;
+                                }
+
+                                if (mousehold == Wall_Stone)
+                                {
+                                    grid[i][ii].textura = StoneWall; 
+                                }
+                                if (mousehold == Wall_Wooden)
+                                {
+                                    grid[i][ii].textura = WoodenWall; 
+                                }
+                                //grid[i][ii].textura = StoneWall; 
+
                             }
+
                         }
                     }
-                    money -= draggedTemplate.price;
-                    draggedTemplate.SetPosition(snapX-GRID_SIZE*(draggedTemplate.gridWidth/2),snapY-GRID_SIZE*(draggedTemplate.gridHeight/2));
-                    ConstructedBuildings.emplace_back(draggedTemplate);
+                }
 
-                    if (shops) {
-                        activeShops.push_back((Vector2){(float)snapX, (float)snapY});
-                    }
-                    else if (houses) {
-                        houseslocations.push_back((Vector2){(float)snapX, (float)snapY});
-                    }
-                    isdragg = 0;
-                }
-                else if (money < draggedTemplate.price) {
-                    no_money = true;
-                }
-            }
-            else {
-                no_money = false;
             }
 
-            //draw buildings
-            for (auto& budova : ConstructedBuildings) {
-                budova.drawTexture();
+            for (auto& zone : LiveZone) {/// vykresluje svetle modou na zony
+                zone.draw(); 
             }
 
             EndMode2D();
@@ -628,8 +613,8 @@ int main()
                 paths = true;
                 build = true;
             }
-            if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, "HOUSES") && !build){
-                houses = true;
+            if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, "ZONES") && !build){
+                zones = true;
                 build = true;
             }
             if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, "SHOPS") && !build){
@@ -677,28 +662,28 @@ int main()
                     }
                 }
 
-                if(houses) {
-                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "HOUSE 1")){
-                        draggedTemplate = BuildingTemplate[0];
+                if(zones) {
+                    if (GuiButton((Rectangle){0, fromtop, 100, 50}, "HOUSE ZONE")){
+                        draggedZone = 1;
                         isdragg = 1;
                     }
-                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "HOUSE 2")){
-                        draggedTemplate = BuildingTemplate[1];
+                    if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "SHOP ZONE")){
+                        draggedZone = 2;
                         isdragg = 1;
                     }
                     if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CANCEL")){
-                        houses = false;
+                        zones = false;
                         build = false;
                     }
                 }
 
                 if (shops) {
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "Food Shop")){
-                        draggedTemplate = BuildingTemplate[2];
+                        //draggedZone = BuildingTemplate[2];
                         isdragg = 1;
                     }
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "Goods Shop")){
-                        draggedTemplate = BuildingTemplate[3];
+                        //draggedZone = BuildingTemplate[3];
                         isdragg = 1;
                     }
                     if (GuiButton((Rectangle){0, 4*fromtop, 100, 50}, "CANCEL")){
@@ -734,7 +719,7 @@ int main()
                 if (IsKeyPressed(KEY_ESCAPE))
                 {
                     paths = false;
-                    houses = false;
+                    zones = false;
                     shops = false;
                     destroy = false;
                     build = false;
