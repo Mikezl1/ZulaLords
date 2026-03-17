@@ -572,6 +572,7 @@ int main()
             if (GuiButton((Rectangle){0, fromtop+50, 100, 50}, "ZONES") && !build){
                 zones = true;
                 build = true;
+                showZones = true;
             }
             if (GuiButton((Rectangle){0, fromtop+100, 100, 50}, "SHOPS") && !build){
                 build = true;
@@ -634,6 +635,7 @@ int main()
                     if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CANCEL")){
                         zones = false;
                         build = false;
+                        showZones = false;
                     }
                 }
 
@@ -684,6 +686,7 @@ int main()
                     destroy = false;
                     build = false;
                     walls = false;
+                    showZones = false;
                 }
             }
             
