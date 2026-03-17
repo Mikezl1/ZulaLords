@@ -1,8 +1,15 @@
 #pragma once
 #include <vector>
-#include <string>
+#include <string> 
 #include <raylib.h>
 #include "constants.h"
+
+typedef enum {
+    CLEAR,
+    HOUSE_ZONE,
+    SHOP_ZONE,
+} ZoneType;
+
 
 struct point
 {
@@ -13,11 +20,14 @@ struct point
 struct ZoneTemplate
 {
     std::string name;
-    int who_am_I ; 
+    int who_am_I;
     int capacity;
     int price;
+    int startX, startY, endX, endY;
+    int zoneIndex;
     Color color;
-    void draw( Camera2D camera);
+    ZoneType type;
+    void draw( Camera2D camera, const std::vector<std::vector<Object>>& grid);
 
     std::vector<point> ownedCells;//jaký jsou bunky v zone
 };

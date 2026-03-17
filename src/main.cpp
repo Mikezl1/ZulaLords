@@ -261,53 +261,6 @@ int main()
     StoneWall = LoadTexPack("BasicWallmodel22.png",BLUE);
     TexPack WoodenWall;
     WoodenWall = LoadTexPack("better wooden wall.png",BLUE);
-    /* // bolest
-    BasicWall.center =LoadTexture("BasicWall/BasicWall.png")  ;     
-    SetTextureFilter(BasicWall.center, 0);
-    BasicWall.right =LoadTexture("BasicWall/BasicWallToRight.png")  ;
-    SetTextureFilter(BasicWall.right, 0);
-    BasicWall.left =LoadTexture("BasicWall/BasicWallToLeft.png")  ;
-    SetTextureFilter(BasicWall.left, 0);
-    BasicWall.horizontal =LoadTexture("BasicWall/BasicWalltoHorizontal.png")  ;
-    SetTextureFilter(BasicWall.horizontal, 0);
-    BasicWall.up =LoadTexture("BasicWall/BasicWalltoUp.png")  ;
-    SetTextureFilter(BasicWall.up, 0);
-    BasicWall.down =LoadTexture("BasicWall/BasicWalltoDown.png")  ;
-    SetTextureFilter(BasicWall.down, 0);
-    BasicWall.vertically =LoadTexture("BasicWall/BasicWalltoVertical.png")  ;
-    SetTextureFilter(BasicWall.vertically, 0);
-    BasicWall.full =LoadTexture("BasicWall/BasicWalltoFull.png")  ;
-    SetTextureFilter(BasicWall.full, 0);
-
-    BasicWall.notdown =LoadTexture("BasicWall/BasicWallnotDown.png")  ;
-    SetTextureFilter(BasicWall.notdown, 0);
-    BasicWall.notup =LoadTexture("BasicWall/BasicWallnotUp.png")  ;
-    SetTextureFilter(BasicWall.notup, 0);
-    BasicWall.notleft =LoadTexture("BasicWall/BasicWallnotLeft.png")  ;
-    SetTextureFilter(BasicWall.notleft, 0);
-    BasicWall.notright =LoadTexture("BasicWall/BasicWallnotRight.png")  ;
-    SetTextureFilter(BasicWall.notright, 0);
-
-    BasicWall.corner_rightdown_E =LoadTexture("BasicWall/corners/BasicWallRightdownE.png")  ;//corners
-    SetTextureFilter(BasicWall.corner_rightdown_E, 0);
-    BasicWall.corner_rightdown_F =LoadTexture("BasicWall/corners/BasicWallRightdownF.png")  ;
-    SetTextureFilter(BasicWall.corner_rightdown_F, 0);
-
-    BasicWall.corner_leftdown_E =LoadTexture("BasicWall/corners/BasicWallLeftdownE.png")  ;
-    SetTextureFilter(BasicWall.corner_leftdown_E, 0);
-    BasicWall.corner_leftdown_F =LoadTexture("BasicWall/corners/BasicWallLeftdownF.png")  ;
-    SetTextureFilter(BasicWall.corner_leftdown_F, 0);
-    
-    BasicWall.corner_leftup_E =LoadTexture("BasicWall/corners/BasicWallUpLeftE.png")  ;
-    SetTextureFilter(BasicWall.corner_leftup_E, 0);
-    BasicWall.corner_leftup_F =LoadTexture("BasicWall/corners/BasicWallLeftupF.png")  ;
-    SetTextureFilter(BasicWall.corner_leftup_F, 0);
-
-    BasicWall.corner_rightup_E =LoadTexture("BasicWall/corners/BasicWalltoUpRightE.png")  ;
-    SetTextureFilter(BasicWall.corner_rightup_E, 0);
-    BasicWall.corner_rightup_F =LoadTexture("BasicWall/corners/BasicWallRightupF.png")  ;
-    SetTextureFilter(BasicWall.corner_rightup_F, 0);
-    */
     std::vector<NPC> npc1(10000);
     int alive_npc = 0;
 
@@ -373,7 +326,7 @@ int main()
 
             if (!pause) {
                 for(int i = 0; i < alive_npc+1; i++) {
-                    npc1[i].NPC_movement(activeShops, houseslocations, grid);
+                    npc1[i].NPC_movement(LiveZone, grid);
                 }
             }
 
@@ -449,11 +402,17 @@ int main()
 
                 ZoneTemplate newZone;
                 int currentZoneIndex = 0;
-                if (zones)
+                if (zones && draggedZone != CLEAR)
                 {
                     newZone.who_am_I = draggedZone;
                     LiveZone.emplace_back(newZone);
                     currentZoneIndex = LiveZone.size() - 1;
+                    LiveZone[currentZoneIndex].startX = grid[StartX][StartY].drawX;
+                    LiveZone[currentZoneIndex].startY = grid[StartX][StartY].drawY;
+                    LiveZone[currentZoneIndex].endX = grid[EndX][EndY].drawX;
+                    LiveZone[currentZoneIndex].endY = grid[EndX][EndY].drawY;
+
+                    LiveZone[currentZoneIndex].zoneIndex = currentZoneIndex;
                 }
 
                 for (int i = StartX; i <= EndX; i++)
@@ -464,18 +423,50 @@ int main()
                         {
                             if (paths)
                             {
-                                grid[i][ii].barv = TerrainColors[mousehold] ;
-                                grid[i][ii].haveTexture = false;                            
+                                grid[i][ii].barv = TerrainColors[mousehold];
+                                grid[i][ii].haveTexture = false;                      
                             }
                             
                             if (zones)
                             {
-                                grid[i][ii].am_I_zone = true ;
-                                grid[i][ii].myzone = currentZoneIndex;
-                                LiveZone[currentZoneIndex].ownedCells.push_back({i, ii});
-                            }
-                            
+                                if (draggedZone == CLEAR)
+                                {
+                                    grid[i][ii].am_I_zone = false;
 
+                                    float targetX = (float)grid[i][ii].drawX;
+                                    float targetY = (float)grid[i][ii].drawY;
+
+                                    for (auto it = houseslocations.begin(); it != houseslocations.end(); ) {
+                                        if (it->x == targetX && it->y == targetY) {
+                                            it = houseslocations.erase(it);
+                                        } else {
+                                            ++it;
+                                        }
+                                    }
+                                    
+                                    for (auto it = activeShops.begin(); it != activeShops.end(); ) {
+                                        if (it->x == targetX && it->y == targetY) {
+                                            it = activeShops.erase(it);
+                                        } else {
+                                            ++it;
+                                        }
+                                    }
+                                }
+                                else if (grid[i][ii].am_I_zone == false) {
+                                    grid[i][ii].am_I_zone = true ;
+                                    grid[i][ii].myzone = currentZoneIndex;
+                                    LiveZone[currentZoneIndex].ownedCells.push_back({i, ii});
+                                    if (draggedZone == HOUSE_ZONE)
+                                    {
+                                        houseslocations.push_back({(float)grid[i][ii].drawX, (float)grid[i][ii].drawY});
+                                    }
+                                    else if (draggedZone == SHOP_ZONE)
+                                    {
+                                        activeShops.push_back({(float)grid[i][ii].drawX, (float)grid[i][ii].drawY});
+                                    }
+                                }
+                            
+                            }
                             if(walls)
                             {
                                 grid[i][ii].haveTexture = true;
@@ -498,6 +489,71 @@ int main()
 
                             }
 
+                        }
+                    }
+                }
+                if (zones && draggedZone != CLEAR)
+                {
+                    std::vector<int> zonesToMergeWith;
+
+                    // 1. Look at every cell we just placed in the new zone
+                    for (auto& p : LiveZone[currentZoneIndex].ownedCells) 
+                    {
+                        // A tiny helper to check the 4 neighbors around this cell
+                        auto checkNeighbor = [&](int nx, int ny) {
+                            // Make sure we don't check outside the map boundaries
+                            if (nx >= 0 && nx < cells && ny >= 0 && ny < cells) {
+                                // Is this neighbor a zone? And does it have a DIFFERENT zone index?
+                                if (grid[nx][ny].am_I_zone == true && grid[nx][ny].myzone != currentZoneIndex)
+                                {
+                                    int foundId = grid[nx][ny].myzone;
+                                    
+                                    // Is the neighboring zone the EXACT SAME TYPE? (House touches House)
+                                    if (LiveZone[foundId].who_am_I == draggedZone) 
+                                    {
+                                        // Add it to our merge list if we haven't already
+                                        bool alreadyFound = false;
+                                        for (int id : zonesToMergeWith) {
+                                            if (id == foundId) alreadyFound = true;
+                                        }
+                                        if (!alreadyFound) zonesToMergeWith.push_back(foundId);
+                                    }
+                                }
+                            }
+                        };
+
+                        // Check Up, Down, Left, Right
+                        checkNeighbor(p.x, p.y - 1);
+                        checkNeighbor(p.x, p.y + 1);
+                        checkNeighbor(p.x - 1, p.y);
+                        checkNeighbor(p.x + 1, p.y);
+                    }
+
+                    // 2. If we found neighboring zones of the same type, MERGE THEM!
+                    if (!zonesToMergeWith.empty()) 
+                    {
+                        // We will dump everything into the FIRST older zone we touched
+                        int masterZoneId = zonesToMergeWith[0];
+
+                        // Dump the NEW zone we just drew into the master zone
+                        for (auto& p : LiveZone[currentZoneIndex].ownedCells) {
+                            LiveZone[masterZoneId].ownedCells.push_back(p);
+                            grid[p.x][p.y].myzone = masterZoneId; // Update the grid to point to the master!
+                        }
+                        // Empty the new zone so it becomes a ghost
+                        LiveZone[currentZoneIndex].ownedCells.clear(); 
+
+                        // What if our new drag bridged TWO OR MORE existing zones together?
+                        // We need to dump those other older zones into the master zone too!
+                        for (size_t k = 1; k < zonesToMergeWith.size(); k++) 
+                        {
+                            int otherZoneId = zonesToMergeWith[k];
+                            for (auto& p : LiveZone[otherZoneId].ownedCells) {
+                                LiveZone[masterZoneId].ownedCells.push_back(p);
+                                grid[p.x][p.y].myzone = masterZoneId; // Update grid
+                            }
+                            // Empty the bridged zone
+                            LiveZone[otherZoneId].ownedCells.clear(); 
                         }
                     }
                 }
@@ -544,7 +600,7 @@ int main()
             if (showZones)
             {
                 for (auto& zone : LiveZone) {/// vykresluje svetle modou na zony
-                    zone.draw( camera); 
+                    zone.draw(camera, grid);
                 }                
             }
 
@@ -625,14 +681,18 @@ int main()
 
                 if(zones) {
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "HOUSE ZONE")){
-                        draggedZone = 1;
+                        draggedZone = HOUSE_ZONE;
                         isdragg = 1;
                     }
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "SHOP ZONE")){
-                        draggedZone = 2;
+                        draggedZone = SHOP_ZONE;
                         isdragg = 1;
                     }
-                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CANCEL")){
+                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CLEAR ZONES")){
+                        draggedZone = CLEAR;
+                        isdragg = 1;
+                    }
+                    if (GuiButton((Rectangle){0, 8*fromtop, 100, 50}, "CANCEL")){
                         zones = false;
                         build = false;
                         showZones = false;

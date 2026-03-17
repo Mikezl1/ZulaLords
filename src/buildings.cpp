@@ -1,7 +1,7 @@
 #include "buildings.h"
 #include "raymath.h"
 
-void ZoneTemplate::draw(Camera2D camera)
+void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>& grid)
 {
     // vykresleni jenom bunky ktere jsou vidět na obrazovce
     Vector2 BotRig  = { (float)GetScreenWidth(), (float)GetScreenHeight() };
@@ -27,22 +27,58 @@ void ZoneTemplate::draw(Camera2D camera)
     
     if ((int)BR_drw.y > cells) BR_drw.y = cells;  
 
+    auto isSameZone = [&](int cx, int cy) {
+        if (cx < 0 || cx >= cells || cy < 0 || cy >= cells) return false;
+        return grid[cx][cy].am_I_zone && grid[cx][cy].what_am_I == this->type;
+    };
+
+    Color outlineColor = (who_am_I == HOUSE_ZONE) ? DARKBLUE : MAROON;
+    float outlineThickness = 3.0f;
+
     for (auto& point : ownedCells) 
     {
         if(point.x >=TL_drw.x && point.x <=BR_drw.x  && point.y >=TL_drw.y && point.y <=BR_drw.y )
         {
-            int DrawX = (point.x * GRID_SIZE) - gridArea;
-            int DrawY = (point.y * GRID_SIZE) - gridArea;
-            if (who_am_I == 1)
-            {
-                DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
-            }
-            else
-            {
-                DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
+            if (grid[point.x][point.y].am_I_zone == true && grid[point.x][point.y].myzone == this->zoneIndex) {
+                int DrawX = (point.x * GRID_SIZE) - gridArea;
+                int DrawY = (point.y * GRID_SIZE) - gridArea;
+                if (who_am_I == HOUSE_ZONE)
+                {
+                    DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
+                }
+                else if (who_am_I == SHOP_ZONE)
+                {
+                    DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
+                }
+
+
+                if (!isSameZone(point.x, point.y - 1)) {
+                    DrawLineEx({(float)DrawX, (float)DrawY}, {(float)(DrawX + GRID_SIZE), (float)DrawY}, outlineThickness, outlineColor);
+                }
+                if (!isSameZone(point.x, point.y + 1)) {
+                    DrawLineEx({(float)DrawX, (float)(DrawY + GRID_SIZE)}, {(float)(DrawX + GRID_SIZE), (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
+                }
+                if (!isSameZone(point.x - 1, point.y)) {
+                    DrawLineEx({(float)DrawX, (float)DrawY}, {(float)DrawX, (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
+                }
+                if (!isSameZone(point.x + 1, point.y)) {
+                    DrawLineEx({(float)(DrawX + GRID_SIZE), (float)DrawY}, {(float)(DrawX + GRID_SIZE), (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
+                }
             }
         }        
     }
+    // if (who_am_I != CLEAR) {
+    //     //DrawRectangleLines(startX, startY, endX - startX + GRID_SIZE, endY - startY + GRID_SIZE, BLACK);
+    //     if (who_am_I == HOUSE_ZONE)
+    //     {
+    //         DrawText("House Zone", startX, startY + (endY - startY)/2, (endX - startX)/8, BLUE);
+    //     }
+    //     else if (who_am_I == SHOP_ZONE)
+    //     {
+    //         DrawText("Shop Zone", startX, startY + (endY - startY)/2, (endX - startX)/8, RED);
+
+    //     }
+    // }
     return;
 }
 

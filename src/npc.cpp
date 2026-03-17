@@ -9,24 +9,70 @@ void NPC::draw()
     return;
 }
 
-void NPC::NPC_movement(const std::vector<Vector2>& shops, const std::vector<Vector2>& houseslocations, const std::vector<std::vector<Object>>& grid) {
+void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vector<std::vector<Object>>& grid) 
+{
+    // --- 1. EVICTION CHECK ---
+    if (hasahouse == true) {
+        int gridX = (homeX + gridArea) / GRID_SIZE;
+        int gridY = (homeY + gridArea) / GRID_SIZE;
+        bool houseStillThere = false;
+        
+        if (gridX >= 0 && gridX < cells && gridY >= 0 && gridY < cells) {
+            // Check if the center coordinate is still within a House Zone
+            if (grid[gridX][gridY].am_I_zone == true && grid[gridX][gridY].what_am_I == HOUSE_ZONE) {
+                houseStillThere = true;
+            }
+        }
+
+        if (!houseStillThere) {
+            hasahouse = false;
+            if (doing == NPC_WALKING_TO_HOME || doing == NPC_HOME) {
+                doing = NPC_IDLE; 
+                waitTimer = 0.0f;
+            }
+        }
+    }
+
+    // --- 2. HOUSE HUNTING (FINDING THE CENTER) ---
     if (hasahouse == false) {
-        if (!houseslocations.empty()) {
-            int closestDistance = -1;
-            Vector2 closestHouse = {0, 0};
-            Vector2 currentPosition = {(float)x, (float)y};
+        float closestDistance = -1;
+        Vector2 bestCenter = {0, 0};
+        bool foundAnyHouse = false;
+        Vector2 currentPosition = {(float)x, (float)y};
 
-            for (size_t i = 0; i < houseslocations.size(); i++) {
-                float dist = Vector2Distance(currentPosition, houseslocations[i]);
+        // Loop through all zones instead of individual tiles
+        for (const auto& zone : LiveZone) {
+            // Only look at House zones that actually have cells
+            if (zone.type == HOUSE_ZONE && !zone.ownedCells.empty()) {
+                
+                // Calculate the mathematical center of this specific zone
+                float sumX = 0;
+                float sumY = 0;
+                for (const auto& p : zone.ownedCells) {
+                    sumX += p.x;
+                    sumY += p.y;
+                }
+                float centerGridX = sumX / zone.ownedCells.size();
+                float centerGridY = sumY / zone.ownedCells.size();
 
-                if ((closestDistance < 0 || dist < closestDistance)) {
+                // Convert the grid center back to world drawing coordinates
+                Vector2 zoneCenter;
+                zoneCenter.x = (centerGridX * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
+                zoneCenter.y = (centerGridY * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
+
+                // Check if this center is the closest one we've found
+                float dist = Vector2Distance(currentPosition, zoneCenter);
+                if (closestDistance < 0 || dist < closestDistance) {
                     closestDistance = dist;
-                    closestHouse = houseslocations[i];
+                    bestCenter = zoneCenter;
+                    foundAnyHouse = true;
                 }
             }
+        }
 
-            homeX = closestHouse.x;
-            homeY = closestHouse.y;
+        if (foundAnyHouse) {
+            homeX = bestCenter.x;
+            homeY = bestCenter.y;
             hasahouse = true;
             doing = NPC_WALKING_TO_HOME;
         }
@@ -68,18 +114,16 @@ void NPC::NPC_movement(const std::vector<Vector2>& shops, const std::vector<Vect
         waitTimer += GetFrameTime();
 
         if (waitTimer >= targetWaitTime) {    
-            if (activeShops.empty()) {
-                doing = NPC_WALKING_TO_HOME;
-                startX = x;
-                startY = y;
-                waitTimer = 0.0f;
-            }
-            else {
-                doing = NPC_WALKING_TO_SHOP;
-                startX = x;
-                startY = y;
-                waitTimer = 0.0f;
-            }
+            doing = NPC_WALKING_TO_HOME;
+            startX = x;
+            startY = y;
+            waitTimer = 0.0f;
+        }
+        else {
+            doing = NPC_WALKING_TO_SHOP;
+            startX = x;
+            startY = y;
+            waitTimer = 0.0f;
         }
     }
     else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP)
@@ -96,25 +140,24 @@ void NPC::NPC_movement(const std::vector<Vector2>& shops, const std::vector<Vect
             destinationX = homeX;
             destinationY = homeY;
         }
-        else if (doing == NPC_WALKING_TO_SHOP)
-        {
-            float closestDistance = -1.0f;
-            Vector2 closestShop = {0, 0};
-            Vector2 currentPosition = {(float)x, (float)y};
+        // else if (doing == NPC_WALKING_TO_SHOP)
+        // {
+        //     float closestDistance = -1.0f;
+        //     Vector2 closestShop = {0, 0};
+        //     Vector2 currentPosition = {(float)x, (float)y};
 
-            for (size_t i = 0; i < activeShops.size(); i++) {
-                float dist = Vector2Distance(currentPosition, activeShops[i]);
+        //     for (size_t i = 0; i < activeShops.size(); i++) {
+        //         float dist = Vector2Distance(currentPosition, activeShops[i]);
 
-                if (closestDistance < 0 || dist < closestDistance) {
-                    closestDistance = dist;
-                    closestShop = activeShops[i];
-                }
-            }
+        //         if (closestDistance < 0 || dist < closestDistance) {
+        //             closestDistance = dist;
+        //             closestShop = activeShops[i];
+        //         }
+        //     }
 
-
-            destinationX = closestShop.x;
-            destinationY = closestShop.y;
-        }
+        //     destinationX = closestShop.x;
+        //     destinationY = closestShop.y;
+        // }
 
         if (abs(destinationX - x) <= speed) {
             x = destinationX;

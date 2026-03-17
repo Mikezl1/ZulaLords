@@ -3,6 +3,7 @@
 #include <raymath.h>
 #include <vector>
 #include "constants.h"
+#include "buildings.h"
 
 typedef enum {
     NPC_IDLE,
@@ -23,9 +24,6 @@ typedef enum {
     GOODS_SHOP,
     NONE,
 } NPC_work;
-
-extern std::vector<Vector2> activeShops;
-extern std::vector<Vector2> houseslocations;
 
 class NPC {
 public:
@@ -49,6 +47,6 @@ public:
     NPC_work work;
     std::vector<Vector2> currentPath;
     long unsigned int currentPathIndex = 0;
-    void NPC_movement(const std::vector<Vector2>& shops, const std::vector<Vector2>& houseslocations, const std::vector<std::vector<Object>>& grid);
+    void NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vector<std::vector<Object>>& grid);
     void draw();
 };

@@ -58,7 +58,7 @@ public:
     Color barv;
     int what_am_I;
     bool am_I_zone;///jsem zona?????
-    int myzone;// index of what zone it belongs
+    int myzone;// index of what zone it belongs to
     bool haveTexture;
     TexPack textura;
     int x, y;
