@@ -398,8 +398,6 @@ int main()
                 int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
                 int EndY = (gridY > StartGridY) ? gridY : StartGridY;
 
-                int amountofwalls = 0;
-
                 ZoneTemplate newZone;
                 int currentZoneIndex = 0;
                 if (zones && draggedZone != CLEAR)
@@ -452,14 +450,12 @@ int main()
                                         }
                                     }
                                 }
-                                else if (grid[i][ii].am_I_zone == false) {
+                                else if (grid[i][ii].am_I_zone == false && grid[i][ii].haveTexture == false) {
                                     grid[i][ii].am_I_zone = true;
                                     grid[i][ii].myzone = currentZoneIndex;
                                     
-                                    // 1. Tell the Grid what type of zone is layered here (For the NPC Eviction check)
                                     grid[i][ii].what_am_I = draggedZone;
                                     
-                                    // 2. Tell the LiveZone memory what type it is (For the NPC House Hunting check)
                                     LiveZone[currentZoneIndex].ownedCells.push_back({i, ii});
                                     LiveZone[currentZoneIndex].who_am_I = draggedZone;
                                     LiveZone[currentZoneIndex].type = (ZoneType)draggedZone;
@@ -483,7 +479,7 @@ int main()
                                 else // BUILDING WALLS
                                 {
                                     int validEmptyTiles = 0;
-                                    int costPerWall = 2; // Change this to whatever you want walls to cost!
+                                    int costPerWall = 2;
 
                                     // Step A: Dry Run (Count the empty tiles)
                                     for (int i = StartX; i <= EndX; i++) {
@@ -498,13 +494,11 @@ int main()
 
                                     int totalCost = validEmptyTiles * costPerWall;
 
-                                    // Step B: Check Wallet
                                     if (money >= totalCost && validEmptyTiles > 0)
                                     {
                                         no_money = false;
                                         money -= totalCost;
 
-                                        // Step C: The Real Build
                                         for (int i = StartX; i <= EndX; i++) {
                                             for (int ii = StartY; ii <= EndY; ii++) {
                                                 if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
@@ -631,12 +625,12 @@ int main()
                 }
             }
             
-            if (showZones)
-            {
-                for (auto& zone : LiveZone) {/// vykresluje svetle modou na zony
+            for (auto& zone : LiveZone) {/// vykresluje svetle modou na zony
+                if (showZones || !zone.valid)
+                {
                     zone.draw(camera, grid);
-                }                
-            }
+                }
+            }                
 
             EndMode2D();
 

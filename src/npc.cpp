@@ -11,7 +11,14 @@ void NPC::draw()
 
 void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vector<std::vector<Object>>& grid) 
 {
-    if (hasahouse == true && !(doing == NPC_WALKING_TO_SHOP || doing == NPC_WALKING_TO_WORK || doing == NPC_SHOPPING || doing == NPC_WORKING)) {
+    bool anyvalidzone;
+
+    for (const auto& zone : LiveZone) {
+        if (zone.valid && !zone.ownedCells.empty()) {
+            anyvalidzone = true;
+        }
+    }
+    if (hasahouse == true && !(doing == NPC_WALKING_TO_SHOP || doing == NPC_WALKING_TO_WORK || doing == NPC_SHOPPING || doing == NPC_WORKING) && anyvalidzone) {
         int gridX = (homeX + gridArea) / GRID_SIZE;
         int gridY = (homeY + gridArea) / GRID_SIZE;
         bool houseStillThere = false;
@@ -33,19 +40,15 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         }
     }
 
-    // --- 2. HOUSE HUNTING (FINDING THE CENTER) ---
     if (hasahouse == false) {
         float closestDistance = -1;
         Vector2 bestCenter = {0, 0};
         bool foundAnyHouse = false;
         Vector2 currentPosition = {(float)x, (float)y};
 
-        // Loop through all zones instead of individual tiles
         for (const auto& zone : LiveZone) {
-            // Only look at House zones that actually have cells
-            if (zone.type == HOUSE_ZONE && !zone.ownedCells.empty()) {
+            if (zone.type == HOUSE_ZONE && !zone.ownedCells.empty() && zone.valid == true) {
                 
-                // Calculate the mathematical center of this specific zone
                 float sumX = 0;
                 float sumY = 0;
                 for (const auto& p : zone.ownedCells) {
@@ -55,12 +58,10 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                 float centerGridX = sumX / zone.ownedCells.size();
                 float centerGridY = sumY / zone.ownedCells.size();
 
-                // Convert the grid center back to world drawing coordinates
                 Vector2 zoneCenter;
                 zoneCenter.x = (centerGridX * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
                 zoneCenter.y = (centerGridY * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
 
-                // Check if this center is the closest one we've found
                 float dist = Vector2Distance(currentPosition, zoneCenter);
                 if (closestDistance < 0 || dist < closestDistance) {
                     closestDistance = dist;
@@ -114,12 +115,11 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         waitTimer += GetFrameTime();
 
         if (waitTimer >= targetWaitTime) {    
-            // Quick scan: Do any valid shops exist in the world right now?
             bool shopExists = false;
             for (const auto& zone : LiveZone) {
-                if (zone.type == SHOP_ZONE && !zone.ownedCells.empty()) {
+                if (zone.type == SHOP_ZONE && !zone.ownedCells.empty() && zone.valid) {
                     shopExists = true;
-                    break; // We found at least one, no need to keep searching!
+                    break;
                 }
             }
 
@@ -131,7 +131,6 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                 waitTimer = 0.0f;
             }
             else {
-                // Yay, shopping time!
                 doing = NPC_WALKING_TO_SHOP;
                 startX = x;
                 startY = y;

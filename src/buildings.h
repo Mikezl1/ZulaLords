@@ -24,6 +24,7 @@ struct ZoneTemplate
     int capacity;
     int startX, startY, endX, endY;
     int zoneIndex;
+    bool valid;
     Color color;
     ZoneType type;
     void draw( Camera2D camera, const std::vector<std::vector<Object>>& grid);
