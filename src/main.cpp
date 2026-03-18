@@ -398,6 +398,8 @@ int main()
                 int StartY = (gridY < StartGridY) ? gridY : StartGridY;// aby to šlo do minusu
                 int EndY = (gridY > StartGridY) ? gridY : StartGridY;
 
+                int amountofwalls = 0;
+
                 ZoneTemplate newZone;
                 int currentZoneIndex = 0;
                 if (zones && draggedZone != CLEAR)
@@ -419,6 +421,12 @@ int main()
                     {
                         if (i >= 0 && i < cells && ii >= 0 && ii < cells ) 
                         {
+                            if (destroy) 
+                            {
+                                grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
+                                grid[i][ii].haveTexture = false;
+                            }
+                            
                             if (paths)
                             {
                                 grid[i][ii].barv = TerrainColors[mousehold];
@@ -458,51 +466,87 @@ int main()
                                 }
                             
                             }
-                            if(walls)
+                            if (walls) 
                             {
-                                grid[i][ii].haveTexture = true;
-                                grid[i][ii].barv = TerrainColors[mousehold] ;
-                                if (mousehold == 0)
+                                if (mousehold == 0) // DESTROYING WALLS
                                 {
-                                    grid[i][ii].textura = TexPack(); 
-                                    grid[i][ii].haveTexture = false;
+                                    for (int i = StartX; i <= EndX; i++) {
+                                        for (int ii = StartY; ii <= EndY; ii++) {
+                                            if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
+                                                grid[i][ii].textura = TexPack(); 
+                                                grid[i][ii].haveTexture = false;
+                                                grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
+                                            }
+                                        }
+                                    }
                                 }
+                                else // BUILDING WALLS
+                                {
+                                    int validEmptyTiles = 0;
+                                    int costPerWall = 2; // Change this to whatever you want walls to cost!
 
-                                if (mousehold == Wall_Stone)
-                                {
-                                    grid[i][ii].textura = StoneWall; 
-                                }
-                                if (mousehold == Wall_Wooden)
-                                {
-                                    grid[i][ii].textura = WoodenWall; 
-                                }
-                                //grid[i][ii].textura = StoneWall; 
+                                    // Step A: Dry Run (Count the empty tiles)
+                                    for (int i = StartX; i <= EndX; i++) {
+                                        for (int ii = StartY; ii <= EndY; ii++) {
+                                            if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
+                                                if (grid[i][ii].haveTexture == false) {
+                                                    validEmptyTiles++;
+                                                }
+                                            }
+                                        }
+                                    }
 
+                                    int totalCost = validEmptyTiles * costPerWall;
+
+                                    // Step B: Check Wallet
+                                    if (money >= totalCost && validEmptyTiles > 0)
+                                    {
+                                        no_money = false;
+                                        money -= totalCost;
+
+                                        // Step C: The Real Build
+                                        for (int i = StartX; i <= EndX; i++) {
+                                            for (int ii = StartY; ii <= EndY; ii++) {
+                                                if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
+                                                    if (grid[i][ii].haveTexture == false) 
+                                                    {
+                                                        grid[i][ii].haveTexture = true;
+                                                        grid[i][ii].barv = TerrainColors[mousehold];
+                                                        
+                                                        if (mousehold == Wall_Stone) {
+                                                            grid[i][ii].textura = StoneWall;
+                                                        } 
+                                                        else if (mousehold == Wall_Wooden) {
+                                                            grid[i][ii].textura = WoodenWall; 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else if (validEmptyTiles > 0)
+                                    {
+                                        no_money = true; 
+                                    }
+                                }
                             }
-
-                        }
+                        }    
                     }
                 }
                 if (zones && draggedZone != CLEAR)
                 {
                     std::vector<int> zonesToMergeWith;
 
-                    // 1. Look at every cell we just placed in the new zone
                     for (auto& p : LiveZone[currentZoneIndex].ownedCells) 
                     {
-                        // A tiny helper to check the 4 neighbors around this cell
                         auto checkNeighbor = [&](int nx, int ny) {
-                            // Make sure we don't check outside the map boundaries
                             if (nx >= 0 && nx < cells && ny >= 0 && ny < cells) {
-                                // Is this neighbor a zone? And does it have a DIFFERENT zone index?
                                 if (grid[nx][ny].am_I_zone == true && grid[nx][ny].myzone != currentZoneIndex)
                                 {
                                     int foundId = grid[nx][ny].myzone;
                                     
-                                    // Is the neighboring zone the EXACT SAME TYPE? (House touches House)
                                     if (LiveZone[foundId].who_am_I == draggedZone) 
                                     {
-                                        // Add it to our merge list if we haven't already
                                         bool alreadyFound = false;
                                         for (int id : zonesToMergeWith) {
                                             if (id == foundId) alreadyFound = true;
@@ -520,7 +564,6 @@ int main()
                         checkNeighbor(p.x + 1, p.y);
                     }
 
-                    // 2. If we found neighboring zones of the same type, MERGE THEM!
                     if (!zonesToMergeWith.empty()) 
                     {
                         // We will dump everything into the FIRST older zone we touched
@@ -738,6 +781,7 @@ int main()
                     build = false;
                     walls = false;
                     showZones = false;
+                    no_money = false;
                 }
             }
             

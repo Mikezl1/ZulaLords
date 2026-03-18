@@ -22,7 +22,6 @@ struct ZoneTemplate
     std::string name;
     int who_am_I;
     int capacity;
-    int price;
     int startX, startY, endX, endY;
     int zoneIndex;
     Color color;
