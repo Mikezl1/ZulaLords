@@ -13,8 +13,6 @@
 #include "buildings.h"
 using namespace std;
 
-std::vector<Vector2> activeShops;
-std::vector<Vector2> houseslocations;
 
 void gridSetup (std::vector<std::vector<Object>>& grid) {
     for (int x = 0; x < cells; x++) {
@@ -431,39 +429,32 @@ int main()
                             {
                                 if (draggedZone == CLEAR)
                                 {
-                                    grid[i][ii].am_I_zone = false;
+                                    if (grid[i][ii].am_I_zone == true) 
+                                    {
+                                        int oldZoneID = grid[i][ii].myzone; 
+                                        
+                                        grid[i][ii].am_I_zone = false;      
 
-                                    float targetX = (float)grid[i][ii].drawX;
-                                    float targetY = (float)grid[i][ii].drawY;
-
-                                    for (auto it = houseslocations.begin(); it != houseslocations.end(); ) {
-                                        if (it->x == targetX && it->y == targetY) {
-                                            it = houseslocations.erase(it);
-                                        } else {
-                                            ++it;
-                                        }
-                                    }
-                                    
-                                    for (auto it = activeShops.begin(); it != activeShops.end(); ) {
-                                        if (it->x == targetX && it->y == targetY) {
-                                            it = activeShops.erase(it);
-                                        } else {
-                                            ++it;
+                                        for (auto it = LiveZone[oldZoneID].ownedCells.begin(); it != LiveZone[oldZoneID].ownedCells.end(); ) {
+                                            if (it->x == i && it->y == ii) {
+                                                it = LiveZone[oldZoneID].ownedCells.erase(it);
+                                            } else {
+                                                ++it;
+                                            }
                                         }
                                     }
                                 }
                                 else if (grid[i][ii].am_I_zone == false) {
-                                    grid[i][ii].am_I_zone = true ;
+                                    grid[i][ii].am_I_zone = true;
                                     grid[i][ii].myzone = currentZoneIndex;
+                                    
+                                    // 1. Tell the Grid what type of zone is layered here (For the NPC Eviction check)
+                                    grid[i][ii].what_am_I = draggedZone;
+                                    
+                                    // 2. Tell the LiveZone memory what type it is (For the NPC House Hunting check)
                                     LiveZone[currentZoneIndex].ownedCells.push_back({i, ii});
-                                    if (draggedZone == HOUSE_ZONE)
-                                    {
-                                        houseslocations.push_back({(float)grid[i][ii].drawX, (float)grid[i][ii].drawY});
-                                    }
-                                    else if (draggedZone == SHOP_ZONE)
-                                    {
-                                        activeShops.push_back({(float)grid[i][ii].drawX, (float)grid[i][ii].drawY});
-                                    }
+                                    LiveZone[currentZoneIndex].who_am_I = draggedZone;
+                                    LiveZone[currentZoneIndex].type = (ZoneType)draggedZone;
                                 }
                             
                             }

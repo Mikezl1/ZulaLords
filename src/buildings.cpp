@@ -51,7 +51,6 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
                     DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
                 }
 
-
                 if (!isSameZone(point.x, point.y - 1)) {
                     DrawLineEx({(float)DrawX, (float)DrawY}, {(float)(DrawX + GRID_SIZE), (float)DrawY}, outlineThickness, outlineColor);
                 }
