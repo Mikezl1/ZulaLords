@@ -1,6 +1,26 @@
 #include "buildings.h"
 #include "raymath.h"
 
+void ZoneTemplate::CheckValidity (const std::vector<std::vector<Object>>& grid) {
+    valid = true;
+    for (auto& point : ownedCells) {
+        auto checkWall = [&](int nx, int ny) {
+            if (nx < 0 || nx >= cells || ny < 0 || ny >= cells) return false;
+
+            if (grid[nx][ny].am_I_zone && grid[nx][ny].myzone == this->zoneIndex) return true;
+
+            return grid[nx][ny].haveTexture;
+        };
+
+        if (!checkWall(point.x, point.y - 1)) valid = false;
+        if (!checkWall(point.x, point.y + 1)) valid = false;
+        if (!checkWall(point.x - 1, point.y)) valid = false;
+        if (!checkWall(point.x + 1, point.y)) valid = false;
+
+        if (!valid) break;
+    }
+}
+
 void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>& grid)
 {
     // vykresleni jenom bunky ktere jsou vidět na obrazovce
@@ -28,8 +48,6 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
     
     if ((int)BR_drw.y > cells) BR_drw.y = cells;  
 
-    bool isEnclosed = true;
-
     auto isSameZone = [&](int cx, int cy) {
         if (cx < 0 || cx >= cells || cy < 0 || cy >= cells) return false;
         return grid[cx][cy].am_I_zone && grid[cx][cy].what_am_I == this->type;
@@ -38,26 +56,8 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
     Color outlineColor = (who_am_I == HOUSE_ZONE) ? DARKBLUE : MAROON;
     float outlineThickness = 3.0f;
 
-    for (auto& point : ownedCells) {
-        auto checkWall = [&](int nx, int ny) {
-            if (nx < 0 || nx >= cells || ny < 0 || ny >= cells) return false;
-
-            if (grid[nx][ny].am_I_zone && grid[nx][ny].myzone == this->zoneIndex) return true;
-
-            return grid[nx][ny].haveTexture; 
-        };
-
-        if (!checkWall(point.x, point.y - 1)) isEnclosed = false;
-        if (!checkWall(point.x, point.y + 1)) isEnclosed = false;
-        if (!checkWall(point.x - 1, point.y)) isEnclosed = false;
-        if (!checkWall(point.x + 1, point.y)) isEnclosed = false;
-
-        if (!isEnclosed) break;
-    }
-
-    if (isEnclosed) {
+    if (valid) {
         float sumX = 0, sumY = 0;
-        valid = true;
         for (auto& point : ownedCells) 
         {
             sumX += point.x;

@@ -626,6 +626,7 @@ int main()
             }
             
             for (auto& zone : LiveZone) {/// vykresluje svetle modou na zony
+                zone.CheckValidity(grid);
                 if (showZones || !zone.valid)
                 {
                     zone.draw(camera, grid);
