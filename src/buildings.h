@@ -24,7 +24,7 @@ struct ZoneTemplate
     int capacity;
     int startX, startY, endX, endY;
     int zoneIndex;
-    bool valid = true;
+    bool valid;
     Color color;
     ZoneType type;
     void CheckValidity(const std::vector<std::vector<Object>>& grid);

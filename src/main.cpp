@@ -391,7 +391,7 @@ int main()
                 }    
             }
 
-            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy | walls | zones) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}))
+            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy | walls | zones) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, (float)screenWidth, 50}))
             {
                 int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
                 int EndX = (gridX > StartGridX) ? gridX : StartGridX;
@@ -640,8 +640,8 @@ int main()
             }    
 
             //in game menu
-            DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
             DrawRectangle(0, 0, screenWidth, 50, Color(BROWN));
+            DrawRectangle(0, 0, 100, screenHeight, Color(BROWN));
 
             float fromtop = 50;
 

@@ -161,7 +161,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
 
             // Search the LiveZone array for the closest SHOP_ZONE center
             for (const auto& zone : LiveZone) {
-                if (zone.type == SHOP_ZONE && !zone.ownedCells.empty()) {
+                if (zone.type == SHOP_ZONE && !zone.ownedCells.empty() && zone.valid) {
                     
                     // Calculate the mathematical center of the shop zone
                     float sumX = 0, sumY = 0;
