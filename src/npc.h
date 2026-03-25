@@ -3,6 +3,7 @@
 #include <raymath.h>
 #include <vector>
 #include "constants.h"
+#include "materials.h"
 #include "buildings.h"
 
 typedef enum {
@@ -20,8 +21,7 @@ typedef enum {
     FOREST,
     SAWMILL,
     FARM,
-    FOOD_SHOP,
-    GOODS_SHOP,
+    SHOP,
     NONE,
 } NPC_work;
 
@@ -44,6 +44,7 @@ public:
     float waitTimer = 0.0f;
     float targetWaitTime = 0.0f;    
     bool hasahouse = false;
+    bool hasaworkplace = false;
     NPC_work work;
     std::vector<Vector2> currentPath;
     long unsigned int currentPathIndex = 0;

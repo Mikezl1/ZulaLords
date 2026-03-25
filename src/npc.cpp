@@ -136,6 +136,22 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                 startY = y;
                 waitTimer = 0.0f;
             }
+
+            bool workExists = false;
+
+            for (const auto& zone : LiveZone) {
+                if (zone.type == WORK_ZONE && !zone.ownedCells.empty() && zone.valid) {
+                    workExists = true;
+                    break;
+                }
+            }
+
+            if (workExists || hasaworkplace) {
+                startX = x;
+                startY = y;
+                doing = NPC_WALKING_TO_WORK;
+                waitTimer = 0.0f;
+            }
         }
     }
     else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP)
@@ -144,8 +160,51 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
 
         if (doing == NPC_WALKING_TO_WORK)
         {
-            destinationX = workplaceX;
-            destinationY = workplaceY;
+            if (hasaworkplace) {
+                destinationX = workplaceX;
+                destinationY = workplaceY;
+            }
+            else {
+                float closestDistance = -1.0f;
+                Vector2 bestWorkCenter = {0, 0};
+                bool foundanywork = false;
+                Vector2 currentPosition = {(float)x, (float)y};
+
+                for (const auto& zone : LiveZone) {
+                    if (zone.type == WORK_ZONE && !zone.ownedCells.empty() && zone.valid) {
+                        
+                        float sumX = 0, sumY = 0;
+                        for (const auto& p : zone.ownedCells) {
+                            sumX += p.x;
+                            sumY += p.y;
+                        }
+                        float centerGridX = sumX / zone.ownedCells.size();
+                        float centerGridY = sumY / zone.ownedCells.size();
+
+                        Vector2 zoneCenter;
+                        zoneCenter.x = (centerGridX * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
+                        zoneCenter.y = (centerGridY * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
+
+                        float dist = Vector2Distance(currentPosition, zoneCenter);
+                        if (closestDistance < 0 || dist < closestDistance) {
+                            closestDistance = dist;
+                            bestWorkCenter = zoneCenter;
+                            foundanywork = true;
+                        }
+                    }
+                }
+
+                if (foundanywork) {
+                    destinationX = bestWorkCenter.x;
+                    destinationY = bestWorkCenter.y;
+                    workplaceX = bestWorkCenter.x;
+                    workplaceY = bestWorkCenter.y;
+                    hasaworkplace = true;
+                } else {
+                    // FAILSAFE: If the player bulldozed the shop while the NPC was walking there!
+                    doing = NPC_IDLE; 
+                }
+            }
         }
         else if (doing == NPC_WALKING_TO_HOME)
         {
@@ -224,15 +283,15 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         if (x == destinationX && y == destinationY) {
             if (doing == NPC_WALKING_TO_WORK) {
                 doing = NPC_WORKING;
-                targetWaitTime = 60;
+                targetWaitTime = 20;
             } 
             else if (doing == NPC_WALKING_TO_HOME) {
                 doing = NPC_HOME;
-                targetWaitTime = 20;
+                targetWaitTime = 10;
             }
             else if (doing == NPC_WALKING_TO_SHOP) {
                 doing = NPC_SHOPPING;
-                targetWaitTime = 30;
+                targetWaitTime = 10;
             }
             else {
                 doing = NPC_IDLE; 

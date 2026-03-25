@@ -11,6 +11,7 @@
 #include "constants.h"
 #include "npc.h"
 #include "buildings.h"
+#include "materials.h"
 using namespace std;
 
 
@@ -228,6 +229,8 @@ int main()
     float SettingsButtonY = startButtonY + buttonHeight + 10;
     float LoadButtonY = SettingsButtonY + buttonHeight + 10;
 
+    float timer = 0.0f;
+
     bool run = false;
     bool pause = false;
     bool settings = false;
@@ -243,7 +246,7 @@ int main()
 
     int mousehold = 0;
 
-    int money = 100;
+    int money = 1000;
 
 
 
@@ -263,6 +266,9 @@ int main()
     int alive_npc = 0;
 
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
+
+    std::vector<Materials> materials;
+    materials.reserve(100);
 
     //grid setup
     gridSetup(grid);
@@ -321,11 +327,42 @@ int main()
 
         //game
         if(run) {
+            
 
             if (!pause) {
+                timer += GetFrameTime();
                 for(int i = 0; i < alive_npc+1; i++) {
                     npc1[i].NPC_movement(LiveZone, grid);
-                }
+                    if (npc1[i].doing == NPC_WORKING) {
+                        if (timer >= 5.0f) {
+                            bool foundStack = false;
+
+                            for (int ii = 0; ii < (int)materials.size(); ii++) {
+                                if (materials[ii].x == npc1[i].workplaceX && materials[ii].y == npc1[i].workplaceY && materials[ii].type == WOOD) {
+                                    materials[ii].amount++;
+                                    foundStack = true;
+                                    TraceLog(LOG_INFO, "MATERIAL ADDED at Grid: %d, %d. Total: %d", materials[ii].x, materials[ii].y, materials[ii].amount);
+                                    timer = 0.0f;
+                                    break;
+                                }
+                            }                          
+                            
+                            if (!foundStack || materials.empty()) {
+                                Materials newMat;
+                                newMat.type = WOOD;
+                                newMat.amount = 1;
+                                newMat.x = npc1[i].workplaceX;
+                                newMat.y = npc1[i].workplaceY;
+                                newMat.Barva = BLUE;
+                                newMat.picked_up = false;
+                                
+                                materials.push_back(newMat);
+                                timer = 0.0f;
+                                TraceLog(LOG_INFO, "MATERIAL SPAWNED at Grid: %d, %d. Total: %d", newMat.x, newMat.y, (int)materials.size());
+                            }
+                        }
+                    }
+                } 
             }
 
             if(IsKeyPressed(KEY_ESCAPE) && !build) {
@@ -356,6 +393,10 @@ int main()
 
             PrintAll(grid,camera);// vykresleni všech buněk ktere jsou vidět na obrazovce
 
+            for (int i = 0; i < (int)materials.size(); i++) {
+                materials[i].Draw();
+            }
+            
             for(int i = 0; i < alive_npc+1; i++) {
                 npc1[i].draw();
             }
@@ -717,7 +758,14 @@ int main()
                         draggedZone = SHOP_ZONE;
                         isdragg = 1;
                     }
-                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CLEAR ZONES")){
+                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "WORK ZONE")){
+                        draggedZone = WORK_ZONE;
+                        isdragg = 1;
+                    }
+                    if (GuiButton((Rectangle){0, 4*fromtop, 100, 50}, "MERCHANT ZONE")){
+                        isdragg = 1;
+                    }
+                    if (GuiButton((Rectangle){0, 5*fromtop, 100, 50}, "CLEAR ZONES")){
                         draggedZone = CLEAR;
                         isdragg = 1;
                     }
