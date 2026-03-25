@@ -52,7 +52,7 @@ Camera2D cameraUpdate(Camera2D camera) {//kamera věci
 
 void SmartBlock(std::vector<std::vector<Object>>& grid, int x, int y) {
     auto isSame = [&](int cx, int cy) {
-        if (cx < 0 || cx >= grid.size() || cy < 0 || cy >= grid[0].size()) return true; 
+        if (cx < 0 || cx >= (int)grid.size() || cy < 0 || cy >= (int)grid[0].size()) return true; 
         return grid[cx][cy].barv == grid[x][y].barv;
     };
 
@@ -211,6 +211,8 @@ int main()
     Camera2D camera = { 0 };
     camera.zoom = 1.0f;
 
+    int draggedZone;
+
     float settingsboxX = screenWidth / 4;
     float settingsboxY = screenHeight / 4 - 100;
     float settingsboxheight = screenHeight / 2 + 200;
@@ -242,11 +244,12 @@ int main()
     bool walls = false;
     bool no_money = false;
     bool showZones = false;
+    // 5bool isdragg = false;
     
 
     int mousehold = 0;
 
-    int money = 1000;
+    int money = 10000;
 
 
 
@@ -254,9 +257,6 @@ int main()
     //building stuff
     std::vector<ZoneTemplate> LiveZone;
     LiveZone.reserve(100);
-    bool isdragg = 0;
-    int draggedZone;
-
 
     TexPack StoneWall;
     StoneWall = LoadTexPack("BasicWallmodel22.png",BLUE);
@@ -331,8 +331,22 @@ int main()
 
             if (!pause) {
                 timer += GetFrameTime();
-                for(int i = 0; i < alive_npc+1; i++) {
+                for(int i = 0; i < alive_npc; i++) {
+                    if (!npc1[i].registeredhouse && npc1[i].hasahouse) {
+                        for (auto& zone : LiveZone) {
+                            if (zone.capacity > 0 && npc1[i].homeX >= zone.startX && npc1[i].homeX <= zone.endX && npc1[i].homeY >= zone.startY && npc1[i].homeY <= zone.endY && zone.type == HOUSE_ZONE) {
+
+                                zone.capacity--;
+                                npc1[i].registeredhouse = true;
+                                
+                                TraceLog(LOG_INFO, "NPC %d moved into a home! Remaining capacity: %d", i, zone.capacity);
+                            }
+                        }
+                    }
+
                     npc1[i].NPC_movement(LiveZone, grid);
+
+
                     if (npc1[i].doing == NPC_WORKING) {
                         if (timer >= 5.0f) {
                             bool foundStack = false;
@@ -500,6 +514,9 @@ int main()
                                     LiveZone[currentZoneIndex].ownedCells.push_back({i, ii});
                                     LiveZone[currentZoneIndex].who_am_I = draggedZone;
                                     LiveZone[currentZoneIndex].type = (ZoneType)draggedZone;
+                                    if (draggedZone == HOUSE_ZONE) {
+                                        LiveZone[currentZoneIndex].capacity = 4;
+                                    }
                                 }
                             
                             }
@@ -687,7 +704,7 @@ int main()
             float fromtop = 50;
 
 
-            GuiValueBox((Rectangle){500, 0, 100, 50}, "Money", &money, 0, 100, false);
+            GuiValueBox((Rectangle){500, 0, 100, 50}, "Money", &money, 0, 10000000, false);
             GuiValueBox((Rectangle){650, 0, 100, 50}, "Pople", &alive_npc, 0, 10000, false);
 
 
@@ -752,57 +769,60 @@ int main()
                 if(zones) {
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "HOUSE ZONE")){
                         draggedZone = HOUSE_ZONE;
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "SHOP ZONE")){
                         draggedZone = SHOP_ZONE;
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "WORK ZONE")){
                         draggedZone = WORK_ZONE;
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 4*fromtop, 100, 50}, "MERCHANT ZONE")){
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 5*fromtop, 100, 50}, "CLEAR ZONES")){
                         draggedZone = CLEAR;
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 8*fromtop, 100, 50}, "CANCEL")){
                         zones = false;
                         build = false;
                         showZones = false;
+                        //isdragg = false;
                     }
                 }
 
                 if (shops) {
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "Food Shop")){
                         //draggedZone = BuildingTemplate[2];
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "Goods Shop")){
                         //draggedZone = BuildingTemplate[3];
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 4*fromtop, 100, 50}, "CANCEL")){
                         shops = false;
                         build = false;
+                        //isdragg = false;
                     }
                 }
 
                 if (walls) {
                     if (GuiButton((Rectangle){0, fromtop, 100, 50}, "Stone wall")){
                         mousehold = Wall_Stone;
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 2*fromtop, 100, 50}, "Wooden wall")){
                         mousehold = Wall_Wooden;
-                        isdragg = 1;
+                        //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "CANCEL")){
                         walls = false;
                         build = false;
+                        //isdragg = false;
                     }
                 }
 
@@ -825,6 +845,7 @@ int main()
                     walls = false;
                     showZones = false;
                     no_money = false;
+                    //isdragg = false;
                 }
             }
             

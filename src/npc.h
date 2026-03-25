@@ -44,6 +44,7 @@ public:
     float waitTimer = 0.0f;
     float targetWaitTime = 0.0f;    
     bool hasahouse = false;
+    bool registeredhouse = false;
     bool hasaworkplace = false;
     NPC_work work;
     std::vector<Vector2> currentPath;

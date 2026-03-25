@@ -47,7 +47,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         Vector2 currentPosition = {(float)x, (float)y};
 
         for (const auto& zone : LiveZone) {
-            if (zone.type == HOUSE_ZONE && !zone.ownedCells.empty() && zone.valid == true) {
+            if (zone.type == HOUSE_ZONE && !zone.ownedCells.empty() && zone.valid == true && (zone.capacity > 0 || registeredhouse)) {
                 
                 float sumX = 0;
                 float sumY = 0;

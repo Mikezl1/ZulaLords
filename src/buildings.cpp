@@ -147,6 +147,7 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
 }
 
 
+
 void Object::draw()
 {
     if(barv != TerrainColors[TERRAIN_BLANK]) {
