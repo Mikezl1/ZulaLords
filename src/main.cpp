@@ -331,7 +331,7 @@ int main()
 
             if (!pause) {
                 timer += GetFrameTime();
-                for(int i = 0; i < alive_npc; i++) {
+                for(int i = 0; i < alive_npc + 1; i++) {
                     if (!npc1[i].registeredhouse && npc1[i].hasahouse) {
                         for (auto& zone : LiveZone) {
                             if (zone.capacity > 0 && npc1[i].homeX >= zone.startX && npc1[i].homeX <= zone.endX && npc1[i].homeY >= zone.startY && npc1[i].homeY <= zone.endY && zone.type == HOUSE_ZONE) {
@@ -339,7 +339,7 @@ int main()
                                 zone.capacity--;
                                 npc1[i].registeredhouse = true;
                                 
-                                TraceLog(LOG_INFO, "NPC %d moved into a home! Remaining capacity: %d", i, zone.capacity);
+                                TraceLog(LOG_INFO, "NPC %d moved into house %d! Remaining capacity: %d", i, zone.zoneIndex, zone.capacity);
                             }
                         }
                     }
@@ -738,13 +738,13 @@ int main()
                 npc1[alive_npc].speedX = 0;
                 npc1[alive_npc].speedY = 0;
                 npc1[alive_npc].rad = 15;
-                npc1[alive_npc].amount = npc1[alive_npc].amount + 1;
                 npc1[alive_npc].work = NONE;
                 npc1[alive_npc].doing = NPC_IDLE;
                 npc1[alive_npc].age = 20;
                 npc1[alive_npc].clicked = false;
                 npc1[alive_npc].hasahouse = false;
-                sprintf(npc1[alive_npc].name, "NPC %d", npc1[alive_npc].amount++);
+                npc1[alive_npc].registeredhouse = false;
+                sprintf(npc1[alive_npc].name, "NPC %d", alive_npc);
             }
 
             if (GuiButton((Rectangle){(float)(screenWidth - 150), 0, 100.0f, 50.0f}, "Show zones") && !pause){

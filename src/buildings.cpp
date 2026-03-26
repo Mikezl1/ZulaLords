@@ -98,14 +98,20 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
         }
         int centerX = (int)((sumX / ownedCells.size()) * GRID_SIZE) - gridArea;
         int centerY = (int)((sumY / ownedCells.size()) * GRID_SIZE) - gridArea;
+        char num[100];
+        sprintf(num, "%d", zoneIndex);
+
         if (who_am_I == HOUSE_ZONE) {
             DrawText("House Zone", centerX - 10, centerY, 15, WHITE);
+            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);
         }
         else if (who_am_I == SHOP_ZONE) {
-            DrawText("Shop Zone", centerX - 10, centerY, 15, WHITE);    
+            DrawText("Shop Zone", centerX - 10, centerY, 15, WHITE); 
+            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);   
         }
         else if (who_am_I == WORK_ZONE) {
-            DrawText("Work Zone", centerX - 10, centerY, 15, WHITE);    
+            DrawText("Work Zone", centerX - 10, centerY, 15, WHITE);
+            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);
         }
     }
     else {

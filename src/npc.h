@@ -31,7 +31,6 @@ public:
     bool clicked = false;
     int x, y;
     NPC_doing doing;
-    int amount;
     int rad;
     int age;
     int workplace;
