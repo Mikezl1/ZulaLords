@@ -15,6 +15,8 @@ typedef enum {
     NPC_SHOPPING,
     NPC_WALKING_TO_SHOP,
     NPC_HOME,
+    NPC_BUILDING,
+    NPC_GATHERING,
 } NPC_doing;
 
 typedef enum {
@@ -40,11 +42,13 @@ public:
     int speedX, speedY;
     int startX, startY;
     int destinationX, destinationY;
+    int itemID;
     float waitTimer = 0.0f;
     float targetWaitTime = 0.0f;    
     bool hasahouse = false;
     bool registeredhouse = false;
     bool hasaworkplace = false;
+    bool holdingitem = false;
     NPC_work work;
     std::vector<Vector2> currentPath;
     long unsigned int currentPathIndex = 0;

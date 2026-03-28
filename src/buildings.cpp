@@ -7,7 +7,7 @@ void ZoneTemplate::CheckValidity (const std::vector<std::vector<Object>>& grid) 
         auto checkWall = [&](int nx, int ny) {
             if (nx < 0 || nx >= cells || ny < 0 || ny >= cells) return false;
 
-            if (grid[nx][ny].am_I_zone && grid[nx][ny].myzone == this->zoneIndex) return true;
+            if (grid[nx][ny].am_I_zone && grid[nx][ny].myzone == this->zoneIndex && grid[nx][ny].built) return true;
 
             return grid[nx][ny].haveTexture;
         };
@@ -158,16 +158,18 @@ void Object::draw()
 {
     if(barv != TerrainColors[TERRAIN_BLANK]) {
         DrawRectangle(drawX, drawY, GRID_SIZE, GRID_SIZE, barv);
-    }
-    
+    }    
     return;
 }
 
 void Object::drawTextures(Texture2D whatTexture)
 {
-    if (haveTexture)
+    if (haveTexture && built)
     {
         DrawTexture(whatTexture, drawX,drawY, WHITE);    
+    }
+    else if (!built) {
+        DrawTexture(whatTexture, drawX,drawY, Fade(WHITE, 0.8));
     }
     return;
 }

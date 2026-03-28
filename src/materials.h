@@ -13,9 +13,9 @@ typedef enum {
 } Material_Type;
 
 struct Materials {
-    int amount;
     int type;
     int x, y;
+    int id;
     bool picked_up;
     int value;
     Color Barva;

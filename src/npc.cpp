@@ -154,7 +154,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             }
         }
     }
-    else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP)
+    else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP || doing == NPC_GATHERING || doing == NPC_BUILDING)
     {
         int speed = 3; 
 

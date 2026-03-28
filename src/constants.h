@@ -65,6 +65,7 @@ public:
     int myzone;// index of what zone it belongs to
     bool haveTexture;
     TexPack textura;
+    bool built = false;
     int x, y;
     int drawX, drawY;
     void draw();
