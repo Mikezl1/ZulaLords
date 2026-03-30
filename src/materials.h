@@ -14,9 +14,10 @@ typedef enum {
 
 struct Materials {
     int type;
-    int x, y;
+    float x, y;
     int id;
     bool picked_up;
+    bool walking_towards;
     int value;
     Color Barva;
     void Draw();

@@ -4,20 +4,26 @@
 void ZoneTemplate::CheckValidity (const std::vector<std::vector<Object>>& grid) {
     valid = true;
     for (auto& point : ownedCells) {
-        auto checkWall = [&](int nx, int ny) {
+        
+        auto checkNeighbor = [&](int nx, int ny) {
+
             if (nx < 0 || nx >= cells || ny < 0 || ny >= cells) return false;
 
-            if (grid[nx][ny].am_I_zone && grid[nx][ny].myzone == this->zoneIndex && grid[nx][ny].built) return true;
+            if (grid[nx][ny].am_I_zone && grid[nx][ny].myzone == this->zoneIndex) return true;
 
-            return grid[nx][ny].haveTexture;
+            if (grid[nx][ny].haveTexture && grid[nx][ny].built) return true;
+
+            return false;
         };
 
-        if (!checkWall(point.x, point.y - 1)) valid = false;
-        if (!checkWall(point.x, point.y + 1)) valid = false;
-        if (!checkWall(point.x - 1, point.y)) valid = false;
-        if (!checkWall(point.x + 1, point.y)) valid = false;
-
-        if (!valid) break;
+        if (!checkNeighbor(point.x, point.y - 1) || 
+            !checkNeighbor(point.x, point.y + 1) || 
+            !checkNeighbor(point.x - 1, point.y) || 
+            !checkNeighbor(point.x + 1, point.y)) 
+        {
+            valid = false;
+            break;
+        }
     }
 }
 

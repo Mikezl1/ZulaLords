@@ -213,6 +213,7 @@ int main()
     camera.zoom = 1.0f;
 
     int draggedZone;
+    int itemIDgen = 0;
 
     float settingsboxX = screenWidth / 4;
     float settingsboxY = screenHeight / 4 - 100;
@@ -348,51 +349,86 @@ int main()
                     }
 
                     npc1[i].NPC_movement(LiveZone, grid);
+                    bool somethingtobuild = false;
 
-                    if (npc1[i].doing == NPC_IDLE) {
+                    for (auto* wall : wallRegistry) { 
+                        if (wall->built == false && wall->haveTexture && !wallRegistry.empty()) {
+                            somethingtobuild = true;
+                            break;
+                        }
+                    }
+
+                    if (npc1[i].doing == NPC_IDLE && !npc1[i].holdingitem && somethingtobuild) {
+                        int bestIdx = -1;
+                        float closestDist = -1.0f;
+                        Vector2 currentPos = {(float)npc1[i].x, (float)npc1[i].y};
+                        
+
                         for (int ii = 0; ii < (int)materials.size(); ii++) {
-                            if (!materials[i].picked_up && !npc1[i].holdingitem) {
-                                npc1[i].doing = NPC_GATHERING;
-                                npc1[i].destinationX = materials[ii].x;
-                                npc1[i].destinationY = materials[ii].y;
-                                npc1[i].startX = npc1[ii].x;
-                                npc1[i].startY = npc1[ii].y;
-                                TraceLog(LOG_INFO, "NPC %d is Gathering", i);
-                            }
-
-                            if (npc1[i].x == materials[ii].x && npc1[i].y == materials[ii].y && !npc1[i].holdingitem) {
-                                npc1[i].itemID = materials[ii].id;
-                                npc1[i].holdingitem = true;
-                                materials[ii].picked_up = true;
-                                TraceLog(LOG_INFO, "NPC %d picked up item", i);
+                            if (!materials[ii].walking_towards && !materials[ii].picked_up) {
+                                float d = Vector2Distance(currentPos, {(float)materials[ii].x, (float)materials[ii].y});
+                                
+                                if (closestDist < 0 || d < closestDist) {
+                                    closestDist = d;
+                                    bestIdx = ii;
+                                }
                             }
                         }
 
-                        if (npc1[i].holdingitem) {
-                            for (auto* wall : wallRegistry) {
-                                if (!wall->built && !(npc1[i].x >= ((wall->x * GRID_SIZE) - gridArea) && npc1[i].y >= ((wall->y * GRID_SIZE) - gridArea) && npc1[i].x <= ((wall->x * GRID_SIZE) - gridArea) + GRID_SIZE && npc1[i].y <= ((wall->y * GRID_SIZE) - gridArea) + GRID_SIZE)) {
-                                    npc1[i].destinationX = (wall->x * GRID_SIZE) - gridArea + GRID_SIZE /2;
-                                    npc1[i].destinationY = (wall->y * GRID_SIZE) - gridArea + GRID_SIZE /2;
-                                    npc1[i].doing = NPC_BUILDING;
-                                    TraceLog(LOG_INFO, "NPC %d found wall at X: %d, Y: %d", i, npc1[i].destinationX, npc1[i].destinationY);
-                                }
+                        if (bestIdx != -1) {
+                            npc1[i].destinationX = materials[bestIdx].x;
+                            npc1[i].destinationY = materials[bestIdx].y;
+                            npc1[i].itemID = materials[bestIdx].id;
+                            npc1[i].doing = NPC_GATHERING;
+                            materials[bestIdx].walking_towards = true; // Reserve it
+                            TraceLog(LOG_INFO, "NPC %d targeting closest material (ID: %d)", i, materials[bestIdx].id);
+                        }
+                    }
+                
 
-                                if (npc1[i].x >= ((wall->x * GRID_SIZE) - gridArea) && npc1[i].y >= ((wall->y * GRID_SIZE) - gridArea) && npc1[i].x <= ((wall->x * GRID_SIZE) - gridArea) + GRID_SIZE && npc1[i].y <= ((wall->y * GRID_SIZE) - gridArea) + GRID_SIZE) {
-                                    for (int ii = 0; ii < (int)materials.size(); ii++) {
-                                        if (materials[ii].id == npc1[i].itemID && materials[ii].picked_up) {
-                                            materials[ii].picked_up = false;
-                                            TraceLog(LOG_INFO, "NPC %d building a wall at X: %d, Y: %d", i, materials[ii].x, materials[ii].y);
-                                            materials[ii] = materials.back();
-                                            materials.pop_back();
+                    if (npc1[i].doing == NPC_GATHERING) {
+                        if (Vector2Distance({(float)npc1[i].x, (float)npc1[i].y}, {(float)npc1[i].destinationX, (float)npc1[i].destinationY}) < 5.0f) {
+                            for (int ii = 0; ii < (int)materials.size(); ii++) {
+                                if (materials[ii].id == npc1[i].itemID) {
+                                    materials[ii].picked_up = true;
+                                    npc1[i].holdingitem = true;
+                                    npc1[i].doing = NPC_IDLE; // Reset to idle to find a wall next frame
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (npc1[i].doing == NPC_IDLE && npc1[i].holdingitem) {
+                        for (auto* wall : wallRegistry) {
+                            if (wall->haveTexture && !wall->built) {
+                                npc1[i].destinationX = wall->drawX + GRID_SIZE / 2;
+                                npc1[i].destinationY = wall->drawY + GRID_SIZE / 2;
+                                npc1[i].doing = NPC_BUILDING;
+                                break; 
+                            }
+                        }
+                    }
+
+                    if (npc1[i].doing == NPC_BUILDING) {
+                        if (Vector2Distance({(float)npc1[i].x, (float)npc1[i].y}, {(float)npc1[i].destinationX, (float)npc1[i].destinationY}) < 10.0f) {
+                            for (auto* wall : wallRegistry) {
+                                if (!wall->built && (wall->drawX + GRID_SIZE/2 == npc1[i].destinationX)) {
+                                    for (int m = 0; m < (int)materials.size(); m++) {
+                                        if (materials[m].id == npc1[i].itemID) {
+                                            materials.erase(materials.begin() + m);
+                                            break;
                                         }
                                     }
+
                                     wall->built = true;
                                     npc1[i].holdingitem = false;
                                     npc1[i].doing = NPC_IDLE;
+                                    break;
                                 }
                             }
                         }
-                    }                   
+                    }
 
 
                     if (npc1[i].doing == NPC_WORKING) {
@@ -402,7 +438,8 @@ int main()
                             newMat.x = npc1[i].workplaceX;
                             newMat.y = npc1[i].workplaceY;
                             newMat.Barva = BLUE;
-                            newMat.picked_up = false;
+                            newMat.walking_towards = false;
+                            newMat.id = itemIDgen++;
                                 
                             materials.push_back(newMat);
                                 
@@ -410,7 +447,7 @@ int main()
                             //TraceLog(LOG_INFO, "MATERIAL SPAWNED at Grid: %d, %d. Total: %d", newMat.x, materials[ii].y, (int)materials.size());
                         }
                     }
-                } 
+                }    
             }
 
             if(IsKeyPressed(KEY_ESCAPE) && !build) {
@@ -446,7 +483,7 @@ int main()
             }
 
             for (int i = 0; i < (int)materials.size(); i++) {
-                if (materials[i].picked_up && !npc1.empty()) {
+                if (!npc1.empty() && materials[i].picked_up) {
                     for (int ii = 0; ii < (int)npc1.size() + 1; ii++) {
                         if (npc1[ii].holdingitem && npc1[ii].itemID == materials[i].id) {
                             materials[i].x = npc1[ii].x;
@@ -518,8 +555,37 @@ int main()
                         {
                             if (destroy) 
                             {
-                                grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
-                                grid[i][ii].haveTexture = false;
+                                if (grid[i][ii].haveTexture) { 
+                                    if (grid[i][ii].built) {
+                                        Materials droppedMat;
+                                        droppedMat.type = WOOD;
+                                        droppedMat.x = (float)grid[i][ii].drawX + (GRID_SIZE / 2);
+                                        droppedMat.y = (float)grid[i][ii].drawY + (GRID_SIZE / 2);
+                                        droppedMat.Barva = BLUE;
+                                        droppedMat.walking_towards = false;
+                                        droppedMat.picked_up = false;
+                                        droppedMat.id = itemIDgen++;
+                                        
+                                        materials.push_back(droppedMat);
+                                        TraceLog(LOG_INFO, "Wall destroyed at %d, %d. Material dropped.", i, ii);
+                                    }
+
+                                    Object* target = &grid[i][ii];
+                                    grid[i][ii].haveTexture = false;
+                                    grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
+                                    grid[i][ii].built = false;
+                                    for (int n = 0; n < (int)wallRegistry.size(); n++) {
+                                        if (wallRegistry[n] == target) {
+                                            wallRegistry[n] = wallRegistry.back();
+                                            wallRegistry.pop_back();
+
+                                            break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
+                                }
                             }
                             
                             if (paths)
@@ -564,30 +630,7 @@ int main()
                             }
                             if (walls) 
                             {
-                                if (mousehold == 0) // DESTROYING WALLS
-                                {
-                                    for (int i = StartX; i <= EndX; i++) {
-                                        for (int ii = StartY; ii <= EndY; ii++) {
-                                            if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
-                                                if (grid[i][ii].haveTexture) { 
-                                                    Object* target = &grid[i][ii];
-                                                    grid[i][ii].haveTexture = false;
-                                                    grid[i][ii].textura = TexPack();
-                                                    grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
-                                                    grid[i][ii].built = false;
-                                                    for (int n = 0; n < (int)wallRegistry.size(); n++) {
-                                                        if (wallRegistry[n] == target) {
-                                                            wallRegistry[n] = wallRegistry.back();
-                                                            wallRegistry.pop_back();
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else // BUILDING WALLS
+                                if (mousehold != 0)  // BUILDING WALLS
                                 {
                                     int validEmptyTiles = 0;
                                     int costPerWall = 2;
@@ -615,6 +658,7 @@ int main()
                                                 if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
                                                     if (grid[i][ii].haveTexture == false) 
                                                     {
+                                                        grid[i][ii].built = false;
                                                         grid[i][ii].haveTexture = true;
                                                         grid[i][ii].barv = TerrainColors[mousehold];
                                                         wallRegistry.push_back(&grid[i][ii]);
@@ -804,12 +848,17 @@ int main()
             }
 
             if (GuiButton((Rectangle){0, fromtop+300, 100, 50}, "Spawn Material") && !pause){
+                itemIDgen++;
                 Materials newMat;
                 newMat.type = WOOD;
                 newMat.x = GetRandomValue(-500, 500);
                 newMat.y = GetRandomValue(-500, 500);
                 newMat.Barva = BLUE;
-                newMat.picked_up = false;
+                newMat.walking_towards = false;
+                newMat.picked_up = false; 
+                newMat.id = itemIDgen;
+
+                TraceLog(LOG_INFO, "Spawned material at X: %d Y: %d, ID: %d", newMat.x, newMat.y, newMat.id);
                     
                 materials.push_back(newMat);
             }
