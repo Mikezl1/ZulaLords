@@ -43,6 +43,7 @@ public:
     int startX, startY;
     int destinationX, destinationY;
     int itemID;
+    int itemType;
     float waitTimer = 0.0f;
     float targetWaitTime = 0.0f;    
     bool hasahouse = false;

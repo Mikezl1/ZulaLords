@@ -7,7 +7,6 @@
 
 typedef enum {
     WOOD,
-    PLANK,
     BRICK,
     STONE,
 } Material_Type;

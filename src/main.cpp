@@ -353,8 +353,16 @@ int main()
 
                     for (auto* wall : wallRegistry) { 
                         if (wall->built == false && wall->haveTexture && !wallRegistry.empty()) {
+                            for (int ii = 0; ii < (int)materials.size(); ii++) {
+                                if (wall->madeoutof == WOOD && materials[ii].type == WOOD) {
+                                    npc1[i].itemType = WOOD;
+                                }
+                                else if (wall->madeoutof == STONE && materials[ii].type == STONE) {
+                                    npc1[i].itemType = STONE;
+                                }
+                            }
+                            
                             somethingtobuild = true;
-                            break;
                         }
                     }
 
@@ -365,7 +373,7 @@ int main()
                         
 
                         for (int ii = 0; ii < (int)materials.size(); ii++) {
-                            if (!materials[ii].walking_towards && !materials[ii].picked_up) {
+                            if (!materials[ii].walking_towards && !materials[ii].picked_up && materials[ii].type == npc1[i].itemType) {
                                 float d = Vector2Distance(currentPos, {(float)materials[ii].x, (float)materials[ii].y});
                                 
                                 if (closestDist < 0 || d < closestDist) {
@@ -392,7 +400,8 @@ int main()
                                 if (materials[ii].id == npc1[i].itemID) {
                                     materials[ii].picked_up = true;
                                     npc1[i].holdingitem = true;
-                                    npc1[i].doing = NPC_IDLE; // Reset to idle to find a wall next frame
+                                    npc1[i].doing = NPC_IDLE;
+                                    npc1[i].itemType = materials[ii].type;
                                     break;
                                 }
                             }
@@ -401,7 +410,7 @@ int main()
 
                     if (npc1[i].doing == NPC_IDLE && npc1[i].holdingitem) {
                         for (auto* wall : wallRegistry) {
-                            if (wall->haveTexture && !wall->built) {
+                            if (wall->haveTexture && !wall->built && wall->madeoutof == npc1[i].itemType) {
                                 npc1[i].destinationX = wall->drawX + GRID_SIZE / 2;
                                 npc1[i].destinationY = wall->drawY + GRID_SIZE / 2;
                                 npc1[i].doing = NPC_BUILDING;
@@ -667,9 +676,11 @@ int main()
                                                         
                                                         if (mousehold == Wall_Stone) {
                                                             grid[i][ii].textura = StoneWall;
+                                                            grid[i][ii].madeoutof = STONE;
                                                         } 
                                                         else if (mousehold == Wall_Wooden) {
-                                                            grid[i][ii].textura = WoodenWall; 
+                                                            grid[i][ii].textura = WoodenWall;
+                                                            grid[i][ii].madeoutof = WOOD;
                                                         }
                                                     }
                                                 }
@@ -847,7 +858,7 @@ int main()
                 alive_npc++;
             }
 
-            if (GuiButton((Rectangle){0, fromtop+300, 100, 50}, "Spawn Material") && !pause){
+            if (GuiButton((Rectangle){0, fromtop+300, 100, 50}, "Spawn Wood") && !pause){
                 itemIDgen++;
                 Materials newMat;
                 newMat.type = WOOD;
@@ -858,7 +869,22 @@ int main()
                 newMat.picked_up = false; 
                 newMat.id = itemIDgen;
 
-                TraceLog(LOG_INFO, "Spawned material at X: %d Y: %d, ID: %d", newMat.x, newMat.y, newMat.id);
+                TraceLog(LOG_INFO, "Spawned wood at X: %d Y: %d, ID: %d", newMat.x, newMat.y, newMat.id);
+                    
+                materials.push_back(newMat);
+            }
+            if (GuiButton((Rectangle){0, fromtop+350, 100, 50}, "Spawn Stone") && !pause){
+                itemIDgen++;
+                Materials newMat;
+                newMat.type = STONE;
+                newMat.x = GetRandomValue(-500, 500);
+                newMat.y = GetRandomValue(-500, 500);
+                newMat.Barva = RED;
+                newMat.walking_towards = false;
+                newMat.picked_up = false; 
+                newMat.id = itemIDgen;
+
+                TraceLog(LOG_INFO, "Spawned stone at X: %d Y: %d, ID: %d", newMat.x, newMat.y, newMat.id);
                     
                 materials.push_back(newMat);
             }

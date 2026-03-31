@@ -30,7 +30,6 @@ typedef enum {
     Wall_COUNT,
 } WallType;
 
-
 inline bool operator!=(const Color& a, const Color& b) {
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
 }
@@ -65,6 +64,7 @@ public:
     int myzone;// index of what zone it belongs to
     bool haveTexture;
     TexPack textura;
+    int madeoutof;
     bool built = false;
     int x, y;
     int drawX, drawY;
