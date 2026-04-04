@@ -96,8 +96,11 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
                     else if (who_am_I == SHOP_ZONE) {
                         DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
                     }
-                    else if (who_am_I == WORK_ZONE) {
+                    else if (who_am_I == WORK_SAWMILL_ZONE) {
                         DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(YELLOW, 0.3f));
+                    }
+                    else if (who_am_I == WORK_QUARRY_ZONE) {
+                        DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
                     }
                 }
             }        
@@ -115,8 +118,12 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
             DrawText("Shop Zone", centerX - 10, centerY, 15, WHITE); 
             DrawText(num, centerX + 25, centerY + 20, 15, WHITE);   
         }
-        else if (who_am_I == WORK_ZONE) {
-            DrawText("Work Zone", centerX - 10, centerY, 15, WHITE);
+        else if (who_am_I == WORK_SAWMILL_ZONE) {
+            DrawText("Sawmill", centerX - 10, centerY, 15, WHITE);
+            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);
+        }
+        else if (who_am_I == WORK_QUARRY_ZONE) {
+            DrawText("Quarry", centerX - 10, centerY, 15, WHITE);
             DrawText(num, centerX + 25, centerY + 20, 15, WHITE);
         }
     }

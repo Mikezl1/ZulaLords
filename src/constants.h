@@ -27,8 +27,13 @@ typedef enum {
     Wall_BLANK,
     Wall_Stone = 101,
     Wall_Wooden,
-    Wall_COUNT,
 } WallType;
+
+typedef enum {
+    NO_SOURCE,
+    TREE,
+    ROCK,
+} MATERIAL_SOURCE;
 
 inline bool operator!=(const Color& a, const Color& b) {
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
@@ -59,15 +64,17 @@ public:
 class Object {
 public:
     Color barv;
-    int what_am_I;
-    bool am_I_zone;///jsem zona?????
-    int myzone;// index of what zone it belongs to
-    bool haveTexture;
     TexPack textura;
+    MATERIAL_SOURCE materialsource;
+    int what_am_I;
+    int myzone;// index of what zone it belongs to
     int madeoutof;
-    bool built = false;
     int x, y;
     int drawX, drawY;
+    int id;
+    bool haveTexture;
+    bool am_I_zone;///jsem zona?????
+    bool built = false;
     void draw();
     void drawTextures(Texture2D whatTexture);
 };

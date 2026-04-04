@@ -20,11 +20,10 @@ typedef enum {
 } NPC_doing;
 
 typedef enum {
-    FOREST,
+    QUARRY,
     SAWMILL,
     FARM,
-    SHOP,
-    NONE,
+    NO_WORK,
 } NPC_work;
 
 class NPC {
@@ -44,12 +43,14 @@ public:
     int destinationX, destinationY;
     int itemID;
     int itemType;
+    int work_zone_id;
     float waitTimer = 0.0f;
     float targetWaitTime = 0.0f;    
     bool hasahouse = false;
     bool registeredhouse = false;
     bool hasaworkplace = false;
     bool holdingitem = false;
+    bool finished_work = false;
     NPC_work work;
     std::vector<Vector2> currentPath;
     long unsigned int currentPathIndex = 0;

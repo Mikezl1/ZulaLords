@@ -8,7 +8,8 @@ typedef enum {
     CLEAR,
     HOUSE_ZONE,
     SHOP_ZONE,
-    WORK_ZONE,
+    WORK_QUARRY_ZONE,
+    WORK_SAWMILL_ZONE,
 } ZoneType;
 
 

@@ -92,13 +92,13 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         }
     }
     else if (doing == NPC_WORKING) {
-        waitTimer += GetFrameTime();
 
-        if (waitTimer >= targetWaitTime) {    
+        if (finished_work) {    
             doing = NPC_WALKING_TO_HOME;
             startX = x;
             startY = y;
             waitTimer = 0.0f;
+            finished_work = false;
         }
     }
     else if (doing == NPC_SHOPPING) {
@@ -140,7 +140,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             bool workExists = false;
 
             for (const auto& zone : LiveZone) {
-                if (zone.type == WORK_ZONE && !zone.ownedCells.empty() && zone.valid) {
+                if ((zone.type == WORK_SAWMILL_ZONE || zone.type == WORK_QUARRY_ZONE) && !zone.ownedCells.empty() && zone.valid) {
                     workExists = true;
                     break;
                 }
@@ -154,9 +154,9 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             }
         }
     }
-    else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP || doing == NPC_GATHERING || doing == NPC_BUILDING)
+    else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP || doing == NPC_GATHERING || doing == NPC_BUILDING || doing == NPC_WORKING)
     {
-        int speed = 3; 
+        int speed = 3;
 
         if (doing == NPC_WALKING_TO_WORK)
         {
@@ -171,7 +171,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                 Vector2 currentPosition = {(float)x, (float)y};
 
                 for (const auto& zone : LiveZone) {
-                    if (zone.type == WORK_ZONE && !zone.ownedCells.empty() && zone.valid) {
+                    if ((zone.type == WORK_SAWMILL_ZONE || zone.type == WORK_QUARRY_ZONE) && !zone.ownedCells.empty() && zone.valid) {
                         
                         float sumX = 0, sumY = 0;
                         for (const auto& p : zone.ownedCells) {
@@ -190,6 +190,8 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                             closestDistance = dist;
                             bestWorkCenter = zoneCenter;
                             foundanywork = true;
+                            work_zone_id = zone.zoneIndex;
+
                         }
                     }
                 }
@@ -200,8 +202,18 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                     workplaceX = bestWorkCenter.x;
                     workplaceY = bestWorkCenter.y;
                     hasaworkplace = true;
+                    for (const auto& zone : LiveZone) {
+                        if (work_zone_id == zone.zoneIndex && zone.type == WORK_SAWMILL_ZONE) {
+                            work = SAWMILL;
+                            TraceLog(LOG_INFO, "Found work place: Sawnmill at X: %d Y: %d", workplaceX, workplaceY);
+                        }
+                        else if (work_zone_id == zone.zoneIndex && zone.type == WORK_QUARRY_ZONE) {
+                            work = QUARRY;
+                            TraceLog(LOG_INFO, "Found work place: Quarry at X: %d Y: %d", workplaceX, workplaceY);
+                        }
+                    }
+
                 } else {
-                    // FAILSAFE: If the player bulldozed the shop while the NPC was walking there!
                     doing = NPC_IDLE; 
                 }
             }
@@ -283,7 +295,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         if (x == destinationX && y == destinationY) {
             if (doing == NPC_WALKING_TO_WORK) {
                 doing = NPC_WORKING;
-                targetWaitTime = 20;
+                targetWaitTime = 30;
             } 
             else if (doing == NPC_WALKING_TO_HOME) {
                 doing = NPC_HOME;
@@ -292,6 +304,8 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             else if (doing == NPC_WALKING_TO_SHOP) {
                 doing = NPC_SHOPPING;
                 targetWaitTime = 10;
+            }
+            else if (doing == NPC_GATHERING || doing == NPC_BUILDING || doing == NPC_WORKING) {
             }
             else {
                 doing = NPC_IDLE; 

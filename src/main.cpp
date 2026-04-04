@@ -16,15 +16,66 @@
 using namespace std;
 
 
-void gridSetup (std::vector<std::vector<Object>>& grid) {
+void gridSetup (std::vector<std::vector<Object>>& grid, std::vector<Object*>& treesRegistry, std::vector<Object*>& stoneRegistry) {
     for (int x = 0; x < cells; x++) {
         for (int y = 0; y < cells; y++) {
             grid[x][y].barv = TerrainColors[TERRAIN_BLANK];
+            grid[x][y].materialsource = NO_SOURCE;
+            grid[x][y].am_I_zone = false;
+            grid[x][y].built = false;
             grid[x][y].x = x;
             grid[x][y].y = y;
             grid[x][y].drawX = (x * GRID_SIZE) - gridArea; 
             grid[x][y].drawY = (y * GRID_SIZE) - gridArea;
 
+        }
+    }
+
+    int a = GetRandomValue(70, 300);
+    for (int t = 0; t < a; t++) {
+        int r = GetRandomValue(20, 100);
+        int x = GetRandomValue(-cells, cells);
+        int y = GetRandomValue(-cells, cells);
+
+        TraceLog(LOG_INFO, "Spawned forest at X:%d Y:%d", x, y);
+
+
+        for (int i = x; i < x + r; i++) {
+            for (int ii = y; ii < y + r; ii++) {
+                if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
+                    if(i % 2 && ii % 2 && grid[i][ii].materialsource == NO_SOURCE) {
+                        grid[i][ii].barv = DARKGREEN;
+                        grid[i][ii].materialsource = TREE;
+                        grid[i][ii].haveTexture = false; // Prozatím nemá texturu, až nějakou udělám tak ji bude mít
+
+                        treesRegistry.push_back(&grid[i][ii]);
+                    }
+                }
+            }   
+        }
+    } 
+    
+    a = GetRandomValue(50, 250);
+    for (int t = 0; t < a; t++) {
+        int r = GetRandomValue(5, 40);
+        int x = GetRandomValue(-cells, cells);
+        int y = GetRandomValue(-cells, cells);
+
+        TraceLog(LOG_INFO, "Spawned rocks at X:%d Y:%d", x, y);
+
+
+        for (int i = x; i < x + r; i++) {
+            for (int ii = y; ii < y + r; ii++) {
+                if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
+                    if(grid[i][ii].materialsource == NO_SOURCE) {
+                        grid[i][ii].barv = DARKGRAY;
+                        grid[i][ii].materialsource = ROCK;
+                        grid[i][ii].haveTexture = false; // Prozatím nemá texturu, až nějakou udělám tak ji bude mít
+
+                        stoneRegistry.push_back(&grid[i][ii]);
+                    }
+                }
+            }   
         }
     }
     grid[1][1].barv = RED;
@@ -244,8 +295,10 @@ int main()
     bool destroy = false;
     bool shops = false;
     bool walls = false;
+    bool work_zones = false;
     bool no_money = false;
     bool showZones = false;
+    bool notplacable = false;
     // 5bool isdragg = false;
     
 
@@ -270,12 +323,14 @@ int main()
     std::vector<std::vector<Object>> grid(cells, std::vector<Object>(cells));
 
     std::vector<Object*> wallRegistry;
+    std::vector<Object*> treesRegistry;
+    std::vector<Object*> stoneRegistry;
 
     std::vector<Materials> materials;
 
     materials.reserve(1000);
     //grid setup
-    gridSetup(grid);
+    gridSetup(grid, treesRegistry, stoneRegistry);
 
     int StartGridX = 0;
     int StartGridY = 0;
@@ -289,6 +344,17 @@ int main()
         if (!run) {
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, startButtonY + 100, buttonWidth, buttonHeight }, "Start Game") && !settings) {
                 run = true;
+                for (int i = 0; i < 50; i++) {
+                    Materials newMat;
+                    newMat.type = WOOD;
+                    newMat.x = GetRandomValue(-200, 200);
+                    newMat.y = GetRandomValue(-200, 200);
+                    newMat.Barva = BLUE;
+                    newMat.walking_towards = false;
+                    newMat.id = itemIDgen++;
+                        
+                    materials.push_back(newMat);
+                }
             }
             if(GuiButton((Rectangle){ screenWidth / 2 - buttonWidth / 2, LoadButtonY + 100, buttonWidth, buttonHeight }, "Load game") && !settings) {
                 ifstream myfile ("save.txt");
@@ -441,19 +507,84 @@ int main()
 
 
                     if (npc1[i].doing == NPC_WORKING) {
-                        if (timer >= 5.0f) {                            
-                            Materials newMat;
-                            newMat.type = WOOD;
-                            newMat.x = npc1[i].workplaceX;
-                            newMat.y = npc1[i].workplaceY;
-                            newMat.Barva = BLUE;
-                            newMat.walking_towards = false;
-                            newMat.id = itemIDgen++;
-                                
-                            materials.push_back(newMat);
-                                
-                            timer = 0.0f;
-                            //TraceLog(LOG_INFO, "MATERIAL SPAWNED at Grid: %d, %d. Total: %d", newMat.x, materials[ii].y, (int)materials.size());
+                        if (npc1[i].work == SAWMILL) {
+                            bool found = false;
+                            int treeX;
+                            int treeY;
+                            float closestDist = -1.0f;
+                            Vector2 currentPos = {(float)npc1[i].x, (float)npc1[i].y};
+
+                            for (auto& trees : treesRegistry) {
+                                float d = Vector2Distance(currentPos, {(float)trees->drawX, (float)trees->drawY});
+
+                                if (closestDist < 0 || d < closestDist) {
+                                    closestDist = d;
+                                    found = true;
+                                    treeX = trees->drawX;
+                                    treeY = trees->drawX;
+                                }
+                            }
+
+
+                            
+                            if (found) {
+                                npc1[i].startX = npc1[i].x;
+                                npc1[i].startY = npc1[i].y;
+                                npc1[i].destinationX = treeX;
+                                npc1[i].destinationY = treeY;
+                            }
+                            
+
+                            for (auto& trees : treesRegistry) {
+                                if (npc1[i].x == trees->drawX && npc1[i].y == trees->drawY) {
+                                    trees->materialsource = NO_SOURCE;
+                                    treesRegistry.back();
+                                    treesRegistry.pop_back();
+
+                                    Materials newMat;
+                                    newMat.type = WOOD;
+                                    newMat.x = npc1[i].x;
+                                    newMat.y = npc1[i].y;
+                                    newMat.Barva = BLUE;
+                                    newMat.walking_towards = false;
+                                    newMat.id = itemIDgen++;
+                                        
+                                    materials.push_back(newMat);
+                                }
+                            }
+                        }
+
+                        for (int ii = 0; ii < (int)materials.size(); ii++) {
+                            if (npc1[i].x == materials[ii].x && npc1[i].y == materials[ii].y && materials[ii].walking_towards && !materials[ii].picked_up) {
+                                materials[ii].picked_up = true;
+                                materials[ii].walking_towards = true;
+                                npc1[i].holdingitem = true;
+                                npc1[i].itemID = materials[ii].id;
+                            }
+                        }
+
+                        if (npc1[i].holdingitem) {
+                            npc1[i].startX = npc1[i].x;
+                            npc1[i].startY = npc1[i].y;
+                            npc1[i].destinationX = npc1[i].workplaceX;
+                            npc1[i].destinationY = npc1[i].workplaceY;
+
+                            if (npc1[i].x == npc1[i].workplaceX && npc1[i].y == npc1[i].workplaceY) {
+                                npc1[i].holdingitem = false;
+
+                                for(int ii = 0; ii < (int)materials.size(); ii++) {
+                                    if (npc1[i].itemID == materials[ii].id) {
+                                        materials[ii].picked_up = false;
+                                        materials[ii].walking_towards = false;
+                                        npc1[i].itemID = 0;
+                                        break;
+                                    }
+                                }
+                                npc1[i].finished_work = true;
+                            }
+                            else {
+                                npc1[i].finished_work = false;
+                            }
                         }
                     }
                 }    
@@ -502,7 +633,7 @@ int main()
                 }
                 materials[i].Draw();
             }
-
+// 
             //line spawn veci
             int gridX = (snapX + gridArea) / GRID_SIZE;
             int gridY = (snapY + gridArea) / GRID_SIZE;
@@ -534,7 +665,7 @@ int main()
                 }    
             }
 
-            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy | walls | zones) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, (float)screenWidth, 50}))
+            if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && !pause && (paths | destroy | walls | zones) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, 100, (float)screenHeight}) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){0, 0, (float)screenWidth, 50}) && !CheckCollisionPointRec(GetMousePosition(), (Rectangle){100, 130, 100, 140}))
             {
                 int StartX = (gridX < StartGridX) ? gridX : StartGridX;// aby to šlo do minusu
                 int EndX = (gridX > StartGridX) ? gridX : StartGridX;
@@ -593,14 +724,21 @@ int main()
                                     }
                                 }
                                 else {
-                                    grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
+                                    if (grid[i][ii].materialsource == NO_SOURCE) {
+                                        grid[i][ii].barv = TerrainColors[TERRAIN_BLANK];
+                                    }
                                 }
                             }
                             
                             if (paths)
-                            {
-                                grid[i][ii].barv = TerrainColors[mousehold];
-                                grid[i][ii].haveTexture = false;                      
+                            {   
+                                if (grid[i][ii].materialsource == NO_SOURCE) {
+                                    grid[i][ii].barv = TerrainColors[mousehold];
+                                    grid[i][ii].haveTexture = false;
+                                }
+                                else {
+                                    notplacable = true;
+                                }
                             }
                             
                             if (zones)
@@ -642,30 +780,24 @@ int main()
                                 if (mousehold != 0)  // BUILDING WALLS
                                 {
                                     int validEmptyTiles = 0;
-                                    int costPerWall = 2;
 
-                                    // Step A: Dry Run (Count the empty tiles)
                                     for (int i = StartX; i <= EndX; i++) {
                                         for (int ii = StartY; ii <= EndY; ii++) {
                                             if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
-                                                if (grid[i][ii].haveTexture == false) {
+                                                if (grid[i][ii].haveTexture == false && grid[i][ii].materialsource == NO_SOURCE) {
                                                     validEmptyTiles++;
                                                 }
                                             }
                                         }
                                     }
 
-                                    int totalCost = validEmptyTiles * costPerWall;
-
-                                    if (money >= totalCost && validEmptyTiles > 0)
+                                    if (validEmptyTiles > 0)
                                     {
-                                        no_money = false;
-                                        money -= totalCost;
-
+                                        notplacable = false;
                                         for (int i = StartX; i <= EndX; i++) {
                                             for (int ii = StartY; ii <= EndY; ii++) {
                                                 if (i >= 0 && i < cells && ii >= 0 && ii < cells) {
-                                                    if (grid[i][ii].haveTexture == false) 
+                                                    if (grid[i][ii].haveTexture == false && grid[i][ii].materialsource == NO_SOURCE) 
                                                     {
                                                         grid[i][ii].built = false;
                                                         grid[i][ii].haveTexture = true;
@@ -687,9 +819,8 @@ int main()
                                             }
                                         }
                                     }
-                                    else if (validEmptyTiles > 0)
-                                    {
-                                        no_money = true; 
+                                    else {
+                                        //notplacable = true;
                                     }
                                 }
                             }
@@ -806,7 +937,11 @@ int main()
 
             if (no_money){
                 DrawText("Not enough money",  screenWidth/2 - 200, screenHeight/2, 40, WHITE);
-            }    
+            }
+
+            if (notplacable) {
+                DrawText("Something is in the way",  screenWidth/2 - 200, screenHeight/2, 40, WHITE);
+            }
 
             //in game menu
             DrawRectangle(0, 0, screenWidth, 50, Color(BROWN));
@@ -848,7 +983,7 @@ int main()
                 npc1[alive_npc].speedX = 0;
                 npc1[alive_npc].speedY = 0;
                 npc1[alive_npc].rad = 15;
-                npc1[alive_npc].work = NONE;
+                npc1[alive_npc].work = NO_WORK;
                 npc1[alive_npc].doing = NPC_IDLE;
                 npc1[alive_npc].age = 20;
                 npc1[alive_npc].clicked = false;
@@ -856,37 +991,6 @@ int main()
                 npc1[alive_npc].registeredhouse = false;
                 sprintf(npc1[alive_npc].name, "NPC %d", alive_npc);
                 alive_npc++;
-            }
-
-            if (GuiButton((Rectangle){0, fromtop+300, 100, 50}, "Spawn Wood") && !pause){
-                itemIDgen++;
-                Materials newMat;
-                newMat.type = WOOD;
-                newMat.x = GetRandomValue(-500, 500);
-                newMat.y = GetRandomValue(-500, 500);
-                newMat.Barva = BLUE;
-                newMat.walking_towards = false;
-                newMat.picked_up = false; 
-                newMat.id = itemIDgen;
-
-                TraceLog(LOG_INFO, "Spawned wood at X: %d Y: %d, ID: %d", newMat.x, newMat.y, newMat.id);
-                    
-                materials.push_back(newMat);
-            }
-            if (GuiButton((Rectangle){0, fromtop+350, 100, 50}, "Spawn Stone") && !pause){
-                itemIDgen++;
-                Materials newMat;
-                newMat.type = STONE;
-                newMat.x = GetRandomValue(-500, 500);
-                newMat.y = GetRandomValue(-500, 500);
-                newMat.Barva = RED;
-                newMat.walking_towards = false;
-                newMat.picked_up = false; 
-                newMat.id = itemIDgen;
-
-                TraceLog(LOG_INFO, "Spawned stone at X: %d Y: %d, ID: %d", newMat.x, newMat.y, newMat.id);
-                    
-                materials.push_back(newMat);
             }
 
             if (GuiButton((Rectangle){(float)(screenWidth - 150), 0, 100.0f, 50.0f}, "Show zones") && !pause){
@@ -917,8 +1021,15 @@ int main()
                         draggedZone = SHOP_ZONE;
                         //isdragg = true;
                     }
-                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "WORK ZONE")){
-                        draggedZone = WORK_ZONE;
+                    if (GuiButton((Rectangle){0, 3*fromtop, 100, 50}, "WORK ZONES") || work_zones){
+                        work_zones = true;
+                        DrawRectangle(100, 3*fromtop - 20, 100, 140, Color(BROWN));
+                        if (GuiButton((Rectangle){100, 3*fromtop, 100, 50}, "SAWMILL ZONE")){
+                            draggedZone = WORK_SAWMILL_ZONE;
+                        }
+                        if (GuiButton((Rectangle){100, 4*fromtop, 100, 50}, "QUARRY ZONE")){
+                            draggedZone = WORK_QUARRY_ZONE;
+                        }
                         //isdragg = true;
                     }
                     if (GuiButton((Rectangle){0, 4*fromtop, 100, 50}, "MERCHANT ZONE")){
@@ -987,7 +1098,8 @@ int main()
                     walls = false;
                     showZones = false;
                     no_money = false;
-                    //isdragg = false;
+                    notplacable = false;
+                    work_zones = false;
                 }
             }
             
