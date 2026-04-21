@@ -418,7 +418,7 @@ int main()
                     bool somethingtobuild = false;
 
                     for (auto* wall : wallRegistry) { 
-                        if (wall->built == false && wall->haveTexture && !wallRegistry.empty()) {
+                        if (wall->built == false && wall->haveTexture && !wallRegistry.empty() && !wall->walking_towards) {
                             for (int ii = 0; ii < (int)materials.size(); ii++) {
                                 if (wall->madeoutof == WOOD && materials[ii].type == WOOD) {
                                     npc1[i].itemType = WOOD;
@@ -476,10 +476,11 @@ int main()
 
                     if (npc1[i].doing == NPC_IDLE && npc1[i].holdingitem) {
                         for (auto* wall : wallRegistry) {
-                            if (wall->haveTexture && !wall->built && wall->madeoutof == npc1[i].itemType) {
+                            if (wall->haveTexture && !wall->built && wall->madeoutof == npc1[i].itemType && !wall->walking_towards) {
                                 npc1[i].destinationX = wall->drawX + GRID_SIZE / 2;
                                 npc1[i].destinationY = wall->drawY + GRID_SIZE / 2;
                                 npc1[i].doing = NPC_BUILDING;
+                                wall->walking_towards = true;
                                 break; 
                             }
                         }
@@ -506,8 +507,9 @@ int main()
                     }
 
 
-                    if (npc1[i].doing == NPC_WORKING) {
-                        if (npc1[i].work == SAWMILL) {
+                    if (npc1[i].doing == NPC_WORKING || npc1[i].doing == NPC_LOGGING || npc1[i].doing == NPC_FARMING || npc1[i].doing == NPC_MINING) {
+                        if (npc1[i].work == SAWMILL && !npc1[i].found_source) {
+                            npc1[i].doing = NPC_LOGGING;
                             bool found = false;
                             int treeX;
                             int treeY;
@@ -515,13 +517,19 @@ int main()
                             Vector2 currentPos = {(float)npc1[i].x, (float)npc1[i].y};
 
                             for (auto& trees : treesRegistry) {
-                                float d = Vector2Distance(currentPos, {(float)trees->drawX, (float)trees->drawY});
+                                if (!trees->walking_towards) {
+                                    float d = Vector2Distance(currentPos, {(float)trees->drawX, (float)trees->drawY});
 
-                                if (closestDist < 0 || d < closestDist) {
-                                    closestDist = d;
-                                    found = true;
-                                    treeX = trees->drawX;
-                                    treeY = trees->drawX;
+                                    if (closestDist < 0 || d < closestDist) {
+                                        closestDist = d;
+                                        found = true;
+                                        treeX = trees->drawX;
+                                        treeY = trees->drawY;
+                                        trees->walking_towards = true;
+                                    }
+                                    else {
+                                        trees->walking_towards = false;
+                                    }
                                 }
                             }
 
@@ -530,60 +538,68 @@ int main()
                             if (found) {
                                 npc1[i].startX = npc1[i].x;
                                 npc1[i].startY = npc1[i].y;
-                                npc1[i].destinationX = treeX;
-                                npc1[i].destinationY = treeY;
+                                npc1[i].destinationX = treeX + GRID_SIZE/2;
+                                npc1[i].destinationY = treeY + GRID_SIZE/2;
+                                npc1[i].found_source = true;
+                                TraceLog(LOG_INFO, "NPC %d targeting closest tree at X: %d Y: %d", i, treeX, treeY);
                             }
-                            
 
-                            for (auto& trees : treesRegistry) {
-                                if (npc1[i].x == trees->drawX && npc1[i].y == trees->drawY) {
-                                    trees->materialsource = NO_SOURCE;
-                                    treesRegistry.back();
-                                    treesRegistry.pop_back();
+                            if (npc1[i].found_source) {
+                                for (auto& trees : treesRegistry) {
+                                    if (npc1[i].x >= trees->drawX && npc1[i].y >= trees->drawY && npc1[i].x <= trees->drawX + GRID_SIZE && npc1[i].y <= trees->drawY + GRID_SIZE) {
+                                        //grid[trees->drawX][trees->drawY].barv = BLANK;
+                                        trees->barv = BLANK;
+                                        trees->materialsource = NO_SOURCE;
+                                        treesRegistry.back();
+                                        treesRegistry.pop_back();
 
-                                    Materials newMat;
-                                    newMat.type = WOOD;
-                                    newMat.x = npc1[i].x;
-                                    newMat.y = npc1[i].y;
-                                    newMat.Barva = BLUE;
-                                    newMat.walking_towards = false;
-                                    newMat.id = itemIDgen++;
-                                        
-                                    materials.push_back(newMat);
-                                }
-                            }
-                        }
+                                        Materials newMat;
+                                        newMat.type = WOOD;
+                                        newMat.x = npc1[i].x;
+                                        newMat.y = npc1[i].y;
+                                        newMat.Barva = BLUE;
+                                        newMat.walking_towards = false;
+                                        newMat.id = itemIDgen++;
+                                            
+                                        materials.push_back(newMat);
 
-                        for (int ii = 0; ii < (int)materials.size(); ii++) {
-                            if (npc1[i].x == materials[ii].x && npc1[i].y == materials[ii].y && materials[ii].walking_towards && !materials[ii].picked_up) {
-                                materials[ii].picked_up = true;
-                                materials[ii].walking_towards = true;
-                                npc1[i].holdingitem = true;
-                                npc1[i].itemID = materials[ii].id;
-                            }
-                        }
-
-                        if (npc1[i].holdingitem) {
-                            npc1[i].startX = npc1[i].x;
-                            npc1[i].startY = npc1[i].y;
-                            npc1[i].destinationX = npc1[i].workplaceX;
-                            npc1[i].destinationY = npc1[i].workplaceY;
-
-                            if (npc1[i].x == npc1[i].workplaceX && npc1[i].y == npc1[i].workplaceY) {
-                                npc1[i].holdingitem = false;
-
-                                for(int ii = 0; ii < (int)materials.size(); ii++) {
-                                    if (npc1[i].itemID == materials[ii].id) {
-                                        materials[ii].picked_up = false;
-                                        materials[ii].walking_towards = false;
-                                        npc1[i].itemID = 0;
-                                        break;
+                                        TraceLog(LOG_INFO, "NPC %d got to a tree at X: %d Y: %d and chopped it down", i, treeX, treeY);
                                     }
                                 }
-                                npc1[i].finished_work = true;
                             }
-                            else {
-                                npc1[i].finished_work = false;
+                        }
+
+                        if (npc1[i].doing == NPC_LOGGING || npc1[i].doing == NPC_MINING || npc1[i].doing == NPC_FARMING) {
+                            for (int ii = 0; ii < (int)materials.size(); ii++) {
+                                if (npc1[i].x == materials[ii].x && npc1[i].y == materials[ii].y && materials[ii].walking_towards && !materials[ii].picked_up) {
+                                    materials[ii].picked_up = true;
+                                    materials[ii].walking_towards = true;
+                                    npc1[i].holdingitem = true;
+                                    npc1[i].itemID = materials[ii].id;
+                                }
+                            }
+
+                            if (npc1[i].holdingitem) {
+                                npc1[i].startX = npc1[i].x;
+                                npc1[i].startY = npc1[i].y;
+                                npc1[i].destinationX = npc1[i].workplaceX;
+                                npc1[i].destinationY = npc1[i].workplaceY;
+
+                                if (npc1[i].x == npc1[i].workplaceX && npc1[i].y == npc1[i].workplaceY) {
+                                    for(int ii = 0; ii < (int)materials.size(); ii++) {
+                                        if (npc1[i].itemID == materials[ii].id) {
+                                            materials[ii].picked_up = false;
+                                            materials[ii].walking_towards = false;
+                                            npc1[i].itemID = 0;
+                                            break;
+                                        }
+                                    }
+                                    npc1[i].holdingitem = false;
+                                    npc1[i].finished_work = true;
+                                }
+                                else {
+                                    npc1[i].finished_work = false;
+                                }
                             }
                         }
                     }

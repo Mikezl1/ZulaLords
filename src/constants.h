@@ -75,6 +75,7 @@ public:
     bool haveTexture;
     bool am_I_zone;///jsem zona?????
     bool built = false;
+    bool walking_towards = false;
     void draw();
     void drawTextures(Texture2D whatTexture);
 };

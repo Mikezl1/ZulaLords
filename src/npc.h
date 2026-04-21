@@ -17,6 +17,9 @@ typedef enum {
     NPC_HOME,
     NPC_BUILDING,
     NPC_GATHERING,
+    NPC_LOGGING,
+    NPC_MINING,
+    NPC_FARMING,
 } NPC_doing;
 
 typedef enum {
@@ -51,6 +54,7 @@ public:
     bool hasaworkplace = false;
     bool holdingitem = false;
     bool finished_work = false;
+    bool found_source = false;
     NPC_work work;
     std::vector<Vector2> currentPath;
     long unsigned int currentPathIndex = 0;

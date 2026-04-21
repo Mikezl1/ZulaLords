@@ -18,7 +18,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             anyvalidzone = true;
         }
     }
-    if (hasahouse == true && !(doing == NPC_WALKING_TO_SHOP || doing == NPC_WALKING_TO_WORK || doing == NPC_SHOPPING || doing == NPC_WORKING) && anyvalidzone) {
+    if (hasahouse == true && !(doing == NPC_WALKING_TO_SHOP || doing == NPC_WALKING_TO_WORK || doing == NPC_SHOPPING || doing == NPC_WORKING || doing == NPC_LOGGING || doing == NPC_MINING || doing == NPC_FARMING) && anyvalidzone) {
         int gridX = (homeX + gridArea) / GRID_SIZE;
         int gridY = (homeY + gridArea) / GRID_SIZE;
         bool houseStillThere = false;
@@ -154,7 +154,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             }
         }
     }
-    else if (doing == NPC_WALKING || doing == NPC_WALKING_TO_WORK || doing == NPC_WALKING_TO_HOME || doing == NPC_WALKING_TO_SHOP || doing == NPC_GATHERING || doing == NPC_BUILDING || doing == NPC_WORKING)
+    else if (doing != NPC_HOME || doing != NPC_SHOPPING)
     {
         int speed = 3;
 
@@ -261,7 +261,6 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                 destinationX = bestShopCenter.x;
                 destinationY = bestShopCenter.y;
             } else {
-                // FAILSAFE: If the player bulldozed the shop while the NPC was walking there!
                 doing = NPC_IDLE; 
             }
         }
@@ -295,7 +294,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         if (x == destinationX && y == destinationY) {
             if (doing == NPC_WALKING_TO_WORK) {
                 doing = NPC_WORKING;
-                targetWaitTime = 30;
+                //targetWaitTime = 30;
             } 
             else if (doing == NPC_WALKING_TO_HOME) {
                 doing = NPC_HOME;
@@ -304,8 +303,6 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             else if (doing == NPC_WALKING_TO_SHOP) {
                 doing = NPC_SHOPPING;
                 targetWaitTime = 10;
-            }
-            else if (doing == NPC_GATHERING || doing == NPC_BUILDING || doing == NPC_WORKING) {
             }
             else {
                 doing = NPC_IDLE; 
