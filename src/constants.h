@@ -105,6 +105,13 @@ public:
     bool am_I_zone;///jsem zona?????
     bool built = false;
     bool walking_towards = false;
+    float crop_timer = 0.0f;
+    bool crop_planted = false;
+    bool crop_ready = false;
+    bool designated_chop = false;
+    bool designated_mine = false;
+    bool has_item = false;
+    int item_type = 0;
     void draw();
     void drawTextures(Texture2D whatTexture);
 };

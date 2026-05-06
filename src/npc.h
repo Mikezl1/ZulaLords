@@ -18,6 +18,9 @@ typedef enum {
     NPC_LOGGING,
     NPC_MINING,
     NPC_FARMING,
+    NPC_EATING,
+    NPC_WALKING_TO_SHOP,
+    NPC_SHOPPING,
 } NPC_doing;
 
 typedef enum {

@@ -9,6 +9,7 @@ typedef enum {
     HOUSE_ZONE,
     WORK_FARM_ZONE,   // Farming — colonists plant/harvest crops here
     STORAGE_ZONE,     // Central stockpile — all deliveries go here
+    SHOP_ZONE,
 } ZoneType;
 
 struct ZoneTemplate
