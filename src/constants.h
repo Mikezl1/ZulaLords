@@ -35,6 +35,35 @@ typedef enum {
     ROCK,
 } MATERIAL_SOURCE;
 
+// New Order System Definitions
+typedef enum {
+    ORDER_NONE = 0,
+    ORDER_CHOP, // Chop trees/wood
+    ORDER_MINE, // Mine stone/rock
+    ORDER_HARVEST // Harvest food (crops)
+} OrderType;
+
+typedef enum {
+    RESOURCE_WOOD,
+    RESOURCE_STONE,
+    RESOURCE_FOOD,
+    RESOURCE_COUNT
+} ResourceType;
+
+struct point {
+    int x, y;
+};
+
+struct Order {
+    int orderID;
+    ResourceType resource;
+    OrderType type;
+    point targetLocation; // Where the resources are located (or where to start)
+    int quantityNeeded;
+    int quantityCollected = 0;
+    bool isActive = true;
+};
+
 inline bool operator!=(const Color& a, const Color& b) {
     return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
 }
@@ -75,9 +104,27 @@ public:
     bool haveTexture;
     bool am_I_zone;///jsem zona?????
     bool built = false;
+    bool walking_towards = false;
+    // Farming
+    bool crop_planted = false;
+    bool crop_ready   = false;
+    float crop_timer  = 0.0f;
+    // Placeable items (beds, doors)
+    bool has_item  = false;
+    int  item_type = 0; // ITEM_NONE / ITEM_BED / ITEM_DOOR
+    
+    // ORDERS SYSTEM
+    bool designated_chop = false;
+    bool designated_mine = false;
+    
     void draw();
     void drawTextures(Texture2D whatTexture);
 };
+
+// Item type constants
+#define ITEM_NONE 0
+#define ITEM_BED  1
+#define ITEM_DOOR 2
 
 
 TexPack LoadTexPack(const char* fileName, Color color) ;

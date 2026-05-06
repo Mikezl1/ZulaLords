@@ -13,8 +13,16 @@ void ZoneTemplate::CheckValidity (const std::vector<std::vector<Object>>& grid) 
 
             if (grid[nx][ny].haveTexture && grid[nx][ny].built) return true;
 
+            // Door items count as valid borders (passable doorway)
+            if (grid[nx][ny].has_item && grid[nx][ny].item_type == ITEM_DOOR) return true;
+
             return false;
         };
+
+        if (type == STORAGE_ZONE || type == WORK_FARM_ZONE) {
+            valid = true;
+            return;
+        }
 
         if (!checkNeighbor(point.x, point.y - 1) || 
             !checkNeighbor(point.x, point.y + 1) || 
@@ -29,7 +37,7 @@ void ZoneTemplate::CheckValidity (const std::vector<std::vector<Object>>& grid) 
 
 void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>& grid)
 {
-    // vykresleni jenom bunky ktere jsou vidět na obrazovce
+    // Draw only cells visible on screen
     Vector2 BotRig  = { (float)GetScreenWidth(), (float)GetScreenHeight() };
 
     Vector2 TopLeft = GetScreenToWorld2D({ 0.0f, 0.0f }, camera);
@@ -42,16 +50,12 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
     Vector2 BR_drw = {(BotRVec.x + gridArea) / GRID_SIZE,(BotRVec.y + gridArea) / GRID_SIZE};
 
     Vector2 mik = {1,1};
-    TL_drw -=  mik;//mik mik
+    TL_drw -=  mik;
     BR_drw +=  mik;
 
-    //aby se neprintovaly neexistujici bunky
     if ((int)TL_drw.x < 0) TL_drw.x = 0;
-
     if ((int)BR_drw.x > cells) BR_drw.x = cells;
-
     if ((int)TL_drw.y < 0) TL_drw.y = 0;
-    
     if ((int)BR_drw.y > cells) BR_drw.y = cells;  
 
     auto isSameZone = [&](int cx, int cy) {
@@ -59,113 +63,87 @@ void ZoneTemplate::draw(Camera2D camera, const std::vector<std::vector<Object>>&
         return grid[cx][cy].am_I_zone && grid[cx][cy].what_am_I == this->type;
     };
 
-    Color outlineColor = (who_am_I == HOUSE_ZONE) ? DARKBLUE : MAROON;
+    // Zone fill colors
+    Color fillColor = Fade(BLUE, 0.25f);
+    if (who_am_I == WORK_FARM_ZONE)    fillColor = Fade(GREEN,  0.30f);
+    if (who_am_I == STORAGE_ZONE)      fillColor = Fade({200, 160, 50, 255}, 0.35f);
+
+    Color outlineColor = (valid) ? DARKBLUE : RED;
+    if (who_am_I == WORK_FARM_ZONE)    outlineColor = DARKGREEN;
+    if (who_am_I == STORAGE_ZONE)      outlineColor = {180, 130, 20, 255};
     float outlineThickness = 3.0f;
 
-    if (valid) {
-        float sumX = 0, sumY = 0;
-        for (auto& point : ownedCells) 
+    float sumX = 0, sumY = 0;
+
+    for (auto& point : ownedCells) 
+    {
+        sumX += point.x;
+        sumY += point.y;
+        if (point.x >= TL_drw.x && point.x <= BR_drw.x && point.y >= TL_drw.y && point.y <= BR_drw.y)
         {
-            sumX += point.x;
-            sumY += point.y;
-            if(point.x >=TL_drw.x && point.x <=BR_drw.x  && point.y >=TL_drw.y && point.y <=BR_drw.y )
-            {
-                if (grid[point.x][point.y].am_I_zone == true && grid[point.x][point.y].myzone == this->zoneIndex) {
-                    int DrawX = (point.x * GRID_SIZE) - gridArea;
-                    int DrawY = (point.y * GRID_SIZE) - gridArea;
+            if (grid[point.x][point.y].am_I_zone == true && grid[point.x][point.y].myzone == this->zoneIndex) {
+                int DrawX = (point.x * GRID_SIZE) - gridArea;
+                int DrawY = (point.y * GRID_SIZE) - gridArea;
 
-                    if (!isSameZone(point.x, point.y - 1) && grid[point.x][point.y - 1].haveTexture == true) {
-                        DrawLineEx({(float)DrawX, (float)DrawY}, {(float)(DrawX + GRID_SIZE), (float)DrawY}, outlineThickness, outlineColor);
-                    }
+                DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, fillColor);
 
-                    if (!isSameZone(point.x, point.y + 1) && grid[point.x][point.y + 1].haveTexture == true) {
-                        DrawLineEx({(float)DrawX, (float)(DrawY + GRID_SIZE)}, {(float)(DrawX + GRID_SIZE), (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
-                    }
-
-                    if (!isSameZone(point.x - 1, point.y) && grid[point.x - 1][point.y].haveTexture == true) {
-                        DrawLineEx({(float)DrawX, (float)DrawY}, {(float)DrawX, (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
-                    }
-                    
-                    if (!isSameZone(point.x + 1, point.y) && grid[point.x + 1][point.y].haveTexture == true) {
-                        DrawLineEx({(float)(DrawX + GRID_SIZE), (float)DrawY}, {(float)(DrawX + GRID_SIZE), (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
-                    }
-                        
-                    if (who_am_I == HOUSE_ZONE) {
-                        DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(BLUE, 0.3f));
-                    }
-                    else if (who_am_I == SHOP_ZONE) {
-                        DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
-                    }
-                    else if (who_am_I == WORK_SAWMILL_ZONE) {
-                        DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(YELLOW, 0.3f));
-                    }
-                    else if (who_am_I == WORK_QUARRY_ZONE) {
-                        DrawRectangle(DrawX, DrawY, GRID_SIZE, GRID_SIZE, Fade(RED, 0.3f));
-                    }
+                // Draw bed icon if item is placed
+                if (grid[point.x][point.y].has_item && grid[point.x][point.y].item_type == ITEM_BED) {
+                    DrawRectangle(DrawX+8, DrawY+12, GRID_SIZE-16, GRID_SIZE-24, {139,90,43,200});
+                    DrawRectangle(DrawX+8, DrawY+10, GRID_SIZE-16, 12, {200,180,150,200});
+                    DrawText("z", DrawX + GRID_SIZE/2-4, DrawY+10, 14, {80,60,40,180});
                 }
-            }        
-        }
+
+                // Draw door indicator
+                if (grid[point.x][point.y].has_item && grid[point.x][point.y].item_type == ITEM_DOOR) {
+                    DrawRectangle(DrawX + GRID_SIZE/4, DrawY, GRID_SIZE/2, GRID_SIZE, {180,130,70,200});
+                    DrawText("D", DrawX + GRID_SIZE/2-5, DrawY+15, 18, WHITE);
+                }
+
+                if (valid) {
+                    if (!isSameZone(point.x, point.y-1) && grid[point.x][point.y-1].haveTexture)
+                        DrawLineEx({(float)DrawX,(float)DrawY},{(float)(DrawX+GRID_SIZE),(float)DrawY}, outlineThickness, outlineColor);
+                    if (!isSameZone(point.x, point.y+1) && grid[point.x][point.y+1].haveTexture)
+                        DrawLineEx({(float)DrawX,(float)(DrawY+GRID_SIZE)},{(float)(DrawX+GRID_SIZE),(float)(DrawY+GRID_SIZE)}, outlineThickness, outlineColor);
+                    if (!isSameZone(point.x-1, point.y) && grid[point.x-1][point.y].haveTexture)
+                        DrawLineEx({(float)DrawX,(float)DrawY},{(float)DrawX,(float)(DrawY+GRID_SIZE)}, outlineThickness, outlineColor);
+                    if (!isSameZone(point.x+1, point.y) && grid[point.x+1][point.y].haveTexture)
+                        DrawLineEx({(float)(DrawX+GRID_SIZE),(float)DrawY},{(float)(DrawX+GRID_SIZE),(float)(DrawY+GRID_SIZE)}, outlineThickness, outlineColor);
+                } else {
+                    if (!isSameZone(point.x, point.y-1))
+                        DrawLineEx({(float)DrawX,(float)DrawY},{(float)(DrawX+GRID_SIZE),(float)DrawY}, outlineThickness, RED);
+                    if (!isSameZone(point.x, point.y+1))
+                        DrawLineEx({(float)DrawX,(float)(DrawY+GRID_SIZE)},{(float)(DrawX+GRID_SIZE),(float)(DrawY+GRID_SIZE)}, outlineThickness, RED);
+                    if (!isSameZone(point.x-1, point.y))
+                        DrawLineEx({(float)DrawX,(float)DrawY},{(float)DrawX,(float)(DrawY+GRID_SIZE)}, outlineThickness, RED);
+                    if (!isSameZone(point.x+1, point.y))
+                        DrawLineEx({(float)(DrawX+GRID_SIZE),(float)DrawY},{(float)(DrawX+GRID_SIZE),(float)(DrawY+GRID_SIZE)}, outlineThickness, RED);
+                }
+            }
+        }        
+    }
+
+    if (!ownedCells.empty()) {
         int centerX = (int)((sumX / ownedCells.size()) * GRID_SIZE) - gridArea;
         int centerY = (int)((sumY / ownedCells.size()) * GRID_SIZE) - gridArea;
         char num[100];
         sprintf(num, "%d", zoneIndex);
 
-        if (who_am_I == HOUSE_ZONE) {
-            DrawText("House Zone", centerX - 10, centerY, 15, WHITE);
-            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);
-        }
-        else if (who_am_I == SHOP_ZONE) {
-            DrawText("Shop Zone", centerX - 10, centerY, 15, WHITE); 
-            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);   
-        }
-        else if (who_am_I == WORK_SAWMILL_ZONE) {
-            DrawText("Sawmill", centerX - 10, centerY, 15, WHITE);
-            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);
-        }
-        else if (who_am_I == WORK_QUARRY_ZONE) {
-            DrawText("Quarry", centerX - 10, centerY, 15, WHITE);
-            DrawText(num, centerX + 25, centerY + 20, 15, WHITE);
+        const char* zoneName = "";
+        if (who_am_I == HOUSE_ZONE)         zoneName = "House";
+        else if (who_am_I == WORK_FARM_ZONE)    zoneName = "Farm";
+        else if (who_am_I == STORAGE_ZONE)      zoneName = "Storage";
+
+        DrawText(zoneName, centerX - 15, centerY,    14, WHITE);
+        DrawText(num,      centerX + 20, centerY+16, 12, WHITE);
+
+        if (!valid && type != STORAGE_ZONE && type != WORK_FARM_ZONE) {
+            DrawText("Needs walls!", centerX-35, centerY+28, 13, RED);
         }
     }
-    else {
-        float sumX = 0, sumY = 0;
-        outlineColor = RED;
-        valid = false;
 
-        for (const auto& point : ownedCells) {
-            sumX += point.x;
-            sumY += point.y;
-
-            int DrawX = (point.x * GRID_SIZE) - gridArea;
-            int DrawY = (point.y * GRID_SIZE) - gridArea;
-
-            if (!isSameZone(point.x, point.y - 1)) {
-                DrawLineEx({(float)DrawX, (float)DrawY}, {(float)(DrawX + GRID_SIZE), (float)DrawY}, outlineThickness, outlineColor);
-            }
-
-            if (!isSameZone(point.x, point.y + 1)) {
-                DrawLineEx({(float)DrawX, (float)(DrawY + GRID_SIZE)}, {(float)(DrawX + GRID_SIZE), (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
-            }
-
-            if (!isSameZone(point.x - 1, point.y)) {
-                DrawLineEx({(float)DrawX, (float)DrawY}, {(float)DrawX, (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
-            }
-                    
-            if (!isSameZone(point.x + 1, point.y)) {
-                DrawLineEx({(float)(DrawX + GRID_SIZE), (float)DrawY}, {(float)(DrawX + GRID_SIZE), (float)(DrawY + GRID_SIZE)}, outlineThickness, outlineColor);
-            }
-        }
-        int centerX = (int)((sumX / ownedCells.size()) * GRID_SIZE) - gridArea;
-        int centerY = (int)((sumY / ownedCells.size()) * GRID_SIZE) - gridArea;
-
-        DrawText("Not surrounded by walls!", centerX - 60, centerY + 20, 15, RED);
-    }
-
-    
     return;
 }
-
-
 
 void Object::draw()
 {

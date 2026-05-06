@@ -9,6 +9,7 @@ typedef enum {
     WOOD,
     BRICK,
     STONE,
+    FOOD,   // Harvested crops — colonists eat to restore hunger
 } Material_Type;
 
 struct Materials {

@@ -1,23 +1,15 @@
 #pragma once
 #include <vector>
-#include <string> 
+#include <string>
 #include <raylib.h>
 #include "constants.h"
 
 typedef enum {
     CLEAR,
     HOUSE_ZONE,
-    SHOP_ZONE,
-    WORK_QUARRY_ZONE,
-    WORK_SAWMILL_ZONE,
+    WORK_FARM_ZONE,   // Farming — colonists plant/harvest crops here
+    STORAGE_ZONE,     // Central stockpile — all deliveries go here
 } ZoneType;
-
-
-struct point
-{
-    int x;
-    int y;
-};
 
 struct ZoneTemplate
 {
