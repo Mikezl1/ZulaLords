@@ -105,18 +105,6 @@ public:
     bool am_I_zone;///jsem zona?????
     bool built = false;
     bool walking_towards = false;
-    // Farming
-    bool crop_planted = false;
-    bool crop_ready   = false;
-    float crop_timer  = 0.0f;
-    // Placeable items (beds, doors)
-    bool has_item  = false;
-    int  item_type = 0; // ITEM_NONE / ITEM_BED / ITEM_DOOR
-    
-    // ORDERS SYSTEM
-    bool designated_chop = false;
-    bool designated_mine = false;
-    
     void draw();
     void drawTextures(Texture2D whatTexture);
 };

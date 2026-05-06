@@ -18,7 +18,6 @@ typedef enum {
     NPC_LOGGING,
     NPC_MINING,
     NPC_FARMING,
-    NPC_EATING,    // Colonist found food, moving to eat it
 } NPC_doing;
 
 typedef enum {

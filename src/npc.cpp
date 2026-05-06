@@ -60,7 +60,7 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             anyvalidzone = true;
         }
     }
-    if (hasahouse == true && !(doing == NPC_WALKING_TO_WORK || doing == NPC_WORKING || doing == NPC_LOGGING || doing == NPC_MINING || doing == NPC_FARMING) && anyvalidzone) {
+    if (hasahouse == true && !(doing == NPC_WALKING_TO_SHOP || doing == NPC_WALKING_TO_WORK || doing == NPC_SHOPPING || doing == NPC_WORKING || doing == NPC_LOGGING || doing == NPC_MINING || doing == NPC_FARMING) && anyvalidzone) {
         int gridX = (homeX + gridArea) / GRID_SIZE;
         int gridY = (homeY + gridArea) / GRID_SIZE;
         bool houseStillThere = false;
@@ -221,18 +221,10 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
                 startY = y;
                 doing = NPC_WALKING_TO_WORK;
                 waitTimer = 0.0f;
-                
-                // Assign work when arriving at farm zone
-                workplaceX = bestWorkCenter.x;
-                workplaceY = bestWorkCenter.y;
-                workplace = WORK_FARM_ZONE;
-            } else {
-                doing = NPC_IDLE;
-                waitTimer = 0.0f;
             }
         }
     }
-    else if (doing != NPC_HOME)
+    else if (doing != NPC_HOME || doing != NPC_SHOPPING)
     {
         int speed = 3;
 
@@ -297,6 +289,47 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
             destinationX = homeX;
             destinationY = homeY;
         }
+        else if (doing == NPC_WALKING_TO_SHOP)
+        {
+            float closestDistance = -1.0f;
+            Vector2 bestShopCenter = {0, 0};
+            bool foundAnyShop = false;
+            Vector2 currentPosition = {(float)x, (float)y};
+
+            // Search the LiveZone array for the closest SHOP_ZONE center
+            for (const auto& zone : LiveZone) {
+                if (zone.type == SHOP_ZONE && !zone.ownedCells.empty() && zone.valid) {
+                    
+                    // Calculate the mathematical center of the shop zone
+                    float sumX = 0, sumY = 0;
+                    for (const auto& p : zone.ownedCells) {
+                        sumX += p.x;
+                        sumY += p.y;
+                    }
+                    float centerGridX = sumX / zone.ownedCells.size();
+                    float centerGridY = sumY / zone.ownedCells.size();
+
+                    Vector2 zoneCenter;
+                    zoneCenter.x = (centerGridX * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
+                    zoneCenter.y = (centerGridY * GRID_SIZE) - gridArea + (GRID_SIZE / 2.0f);
+
+                    // Is this shop closer than the last one we checked?
+                    float dist = Vector2Distance(currentPosition, zoneCenter);
+                    if (closestDistance < 0 || dist < closestDistance) {
+                        closestDistance = dist;
+                        bestShopCenter = zoneCenter;
+                        foundAnyShop = true;
+                    }
+                }
+            }
+
+            if (foundAnyShop) {
+                destinationX = bestShopCenter.x;
+                destinationY = bestShopCenter.y;
+            } else {
+                doing = NPC_IDLE; 
+            }
+        }
 
         if (abs(destinationX - x) <= speed) {
             x = destinationX;
@@ -327,15 +360,15 @@ void NPC::NPC_movement(const std::vector<ZoneTemplate>& LiveZone, const std::vec
         if (x == destinationX && y == destinationY) {
             if (doing == NPC_WALKING_TO_WORK) {
                 doing = NPC_WORKING;
+                //targetWaitTime = 30;
             } 
             else if (doing == NPC_WALKING_TO_HOME) {
                 doing = NPC_HOME;
                 targetWaitTime = 10;
             }
-            else if (doing == NPC_LOGGING || doing == NPC_MINING || doing == NPC_FARMING ||
-                     doing == NPC_BUILDING || doing == NPC_GATHERING || doing == NPC_EATING) {
-                // main.cpp handles transitions for these states via distance checks
-                // Do NOT auto-transition to IDLE
+            else if (doing == NPC_WALKING_TO_SHOP) {
+                doing = NPC_SHOPPING;
+                targetWaitTime = 10;
             }
             else {
                 doing = NPC_IDLE; 
